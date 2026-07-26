@@ -1,0 +1,644 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Heart,
+  Sparkles,
+  Calendar,
+  MapPin,
+  PiggyBank,
+  Users,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+  PartyPopper,
+  X,
+  AlertCircle,
+  Loader2
+} from 'lucide-react';
+import { checkEmailWhitelist } from '../utils/whitelist';
+
+export interface OnboardingData {
+  partner1Name: string;
+  partner2Name: string;
+  email: string;
+  password: string;
+  weddingDate: string;
+  estimatedGuests: number;
+  weddingType: string;
+  weddingStyle: string;
+  venueName: string;
+  venueAddress: string;
+  venueType: 'indoor' | 'outdoor' | 'both';
+  season: string;
+  totalBudget: number;
+  budgetPriorities: string[];
+  budgetFlexibility: 'strict' | 'moderate' | 'flexible';
+  collaborators: { name: string; email: string; role: 'Editor' | 'Viewer' }[];
+}
+
+export interface OnboardingProps {
+  onComplete: (data: OnboardingData) => void;
+}
+
+const initialData: OnboardingData = {
+  partner1Name: '',
+  partner2Name: '',
+  email: '',
+  password: '',
+  weddingDate: '',
+  estimatedGuests: 100,
+  weddingType: 'Traditional',
+  weddingStyle: 'Romantic',
+  venueName: '',
+  venueAddress: '',
+  venueType: 'both',
+  season: 'Spring',
+  totalBudget: 15000,
+  budgetPriorities: [],
+  budgetFlexibility: 'moderate',
+  collaborators: [{ name: '', email: '', role: 'Editor' }],
+};
+
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState<OnboardingData>(initialData);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [whitelistError, setWhitelistError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (step === 1) {
+      if (!data.partner1Name) newErrors.partner1Name = 'Required';
+      if (!data.partner2Name) newErrors.partner2Name = 'Required';
+      if (!data.email) newErrors.email = 'Required';
+      else if (!/\S+@\S+\.\S+/.test(data.email)) newErrors.email = 'Invalid email';
+      if (!data.password) newErrors.password = 'Required';
+      if (data.password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    } else if (step === 2) {
+      if (!data.weddingDate) newErrors.weddingDate = 'Required';
+    } else if (step === 3) {
+      // Allow empty if 'still searching' logic could be added, but for now we'll just check if it's there
+      // or we can make it optional
+    } else if (step === 4) {
+      if (data.totalBudget <= 0) newErrors.totalBudget = 'Must be greater than 0';
+    } else if (step === 5) {
+      data.collaborators.forEach((collab, index) => {
+        if (!collab.name && collab.email) newErrors[`collabName_${index}`] = 'Required';
+        if (collab.email && !/\S+@\S+\.\S+/.test(collab.email)) newErrors[`collabEmail_${index}`] = 'Invalid email';
+      });
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = async () => {
+    if (validateStep()) {
+      if (step === 1) {
+        setVerifyingEmail(true);
+        setWhitelistError(null);
+        try {
+          const res = await checkEmailWhitelist(data.email);
+          if (!res.allowed) {
+            setWhitelistError(res.reason || 'This email address is not authorized.');
+            setVerifyingEmail(false);
+            return;
+          }
+        } catch (err) {
+          console.error('Error verifying email:', err);
+        }
+        setVerifyingEmail(false);
+      }
+      setStep((prev) => Math.min(prev + 1, 6));
+    }
+  };
+
+  const handlePrev = () => {
+    setStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleComplete = () => {
+    if (validateStep()) {
+      onComplete(data);
+    }
+  };
+
+  const handleChange = (field: keyof OnboardingData, value: any) => {
+    setData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const toggleBudgetPriority = (priority: string) => {
+    const priorities = data.budgetPriorities.includes(priority)
+      ? data.budgetPriorities.filter((p) => p !== priority)
+      : [...data.budgetPriorities, priority];
+    handleChange('budgetPriorities', priorities);
+  };
+
+  const addCollaborator = () => {
+    handleChange('collaborators', [...data.collaborators, { name: '', email: '', role: 'Editor' }]);
+  };
+
+  const removeCollaborator = (index: number) => {
+    const newCollabs = data.collaborators.filter((_, i) => i !== index);
+    handleChange('collaborators', newCollabs);
+  };
+
+  const updateCollaborator = (index: number, field: string, value: string) => {
+    const newCollabs = [...data.collaborators];
+    newCollabs[index] = { ...newCollabs[index], [field]: value };
+    handleChange('collaborators', newCollabs);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-100 via-white to-amber-100 p-4 md:p-8 font-sans overflow-hidden">
+      <style>{`
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .step-container {
+          animation: slideInRight 0.4s ease-out forwards;
+        }
+        @keyframes confettiFall {
+          0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti-piece {
+          position: absolute;
+          width: 10px;
+          height: 20px;
+          background: #f43f5e;
+          top: -20px;
+          animation: confettiFall 3s linear infinite;
+        }
+      `}</style>
+      
+      {step === 6 && (
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className="confetti-piece"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                backgroundColor: ['#f43f5e', '#fbbf24', '#3b82f6', '#10b981', '#a855f7'][Math.floor(Math.random() * 5)]
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="w-full max-w-3xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 overflow-hidden flex flex-col relative z-10 min-h-[600px]">
+        {/* Header / Progress */}
+        <div className="px-8 py-6 border-b border-gray-200/50 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h1 className="font-serif text-2xl font-semibold text-gray-800 flex items-center gap-2">
+              <Heart className="w-6 h-6 text-rose-500 fill-rose-500/20" />
+              WedTrack OS
+            </h1>
+            <span className="text-sm font-medium text-gray-500">Step {step} of 6</span>
+          </div>
+          <div className="w-full flex justify-between gap-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                  i <= step ? 'bg-rose-500' : 'bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 p-8 overflow-y-auto">
+          <div className="step-container h-full" key={step}>
+            {step === 1 && (
+              <div className="max-w-xl mx-auto space-y-6">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-4">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Welcome to your journey</h2>
+                  <p className="text-gray-600">Let's create your account and meet the couple.</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Partner 1 Name</label>
+                    <input
+                      type="text"
+                      value={data.partner1Name}
+                      onChange={(e) => handleChange('partner1Name', e.target.value)}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner1Name ? 'border-red-500' : 'border-gray-200'}`}
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Partner 2 Name</label>
+                    <input
+                      type="text"
+                      value={data.partner2Name}
+                      onChange={(e) => handleChange('partner2Name', e.target.value)}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner2Name ? 'border-red-500' : 'border-gray-200'}`}
+                      placeholder="John Smith"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={data.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                    placeholder="hello@example.com"
+                  />
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                </div>
+
+                {whitelistError && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl flex items-start gap-3 text-left shadow-sm">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
+                    <div className="text-xs">
+                      <p className="font-bold text-sm mb-1">Etsy Access Verification Required</p>
+                      <p className="text-rose-600 leading-relaxed">{whitelistError}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={data.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all pr-10 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setErrors(prev => ({...prev, confirmPassword: ''}));
+                      }}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`}
+                    />
+                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="max-w-xl mx-auto space-y-8">
+                <div className="text-center mb-6">
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">The Big Day</h2>
+                  <p className="text-gray-600">Tell us about your wedding vision.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-rose-500" /> Wedding Date
+                  </label>
+                  <input
+                    type="date"
+                    value={data.weddingDate}
+                    onChange={(e) => handleChange('weddingDate', e.target.value)}
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.weddingDate ? 'border-red-500' : 'border-gray-200'}`}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-rose-500" /> Estimated Guests
+                    </label>
+                    <span className="text-rose-600 font-semibold">{data.estimatedGuests}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="20"
+                    max="500"
+                    step="10"
+                    value={data.estimatedGuests}
+                    onChange={(e) => handleChange('estimatedGuests', parseInt(e.target.value))}
+                    className="w-full h-2 bg-rose-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>20</span>
+                    <span>500+</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Wedding Type</label>
+                    <select
+                      value={data.weddingType}
+                      onChange={(e) => handleChange('weddingType', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
+                    >
+                      {['Traditional', 'Destination', 'Intimate/Elopement', 'Cultural', 'Garden Party', 'Black Tie Gala'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Wedding Style</label>
+                    <select
+                      value={data.weddingStyle}
+                      onChange={(e) => handleChange('weddingStyle', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
+                    >
+                      {['Romantic', 'Modern Minimalist', 'Rustic Chic', 'Bohemian', 'Classic Elegance', 'Glamorous', 'Vintage'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="max-w-xl mx-auto space-y-8">
+                <div className="text-center mb-6">
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Location, Location</h2>
+                  <p className="text-gray-600">Where will the magic happen?</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-rose-500" /> Venue Name</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={data.venueName}
+                      onChange={(e) => handleChange('venueName', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
+                      placeholder="e.g. The Grand Plaza (or 'Still searching')"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City / Address</label>
+                    <input
+                      type="text"
+                      value={data.venueAddress}
+                      onChange={(e) => handleChange('venueAddress', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
+                      placeholder="e.g. New York, NY"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Venue Setting</label>
+                  <div className="flex gap-4">
+                    {['indoor', 'outdoor', 'both'].map((type) => (
+                      <label key={type} className={`flex-1 cursor-pointer rounded-xl border p-4 text-center transition-all ${data.venueType === type ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm' : 'border-gray-200 bg-white hover:border-rose-200'}`}>
+                        <input type="radio" className="hidden" checked={data.venueType === type} onChange={() => handleChange('venueType', type)} />
+                        <span className="capitalize font-medium">{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Preferred Season</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['Spring', 'Summer', 'Fall', 'Winter'].map((s) => (
+                      <label key={s} className={`cursor-pointer rounded-xl border py-2 text-center transition-all ${data.season === s ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm' : 'border-gray-200 bg-white hover:border-rose-200'}`}>
+                        <input type="radio" className="hidden" checked={data.season === s} onChange={() => handleChange('season', s)} />
+                        <span className="text-sm font-medium">{s}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="max-w-xl mx-auto space-y-8">
+                <div className="text-center mb-6">
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Budget Planning</h2>
+                  <p className="text-gray-600">Let's talk numbers so we can keep you on track.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                    <PiggyBank className="w-4 h-4 text-rose-500" /> Total Budget
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-2.5 text-gray-500 font-medium">$</span>
+                    <input
+                      type="number"
+                      value={data.totalBudget || ''}
+                      onChange={(e) => handleChange('totalBudget', parseFloat(e.target.value) || 0)}
+                      className={`w-full pl-8 pr-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-lg font-medium ${errors.totalBudget ? 'border-red-500' : 'border-gray-200'}`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Top Priorities (Select all that apply)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Venue', 'Food & Drinks', 'Photography', 'Flowers & Decor', 'Entertainment', 'Attire', 'Stationery', 'Transportation'].map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => toggleBudgetPriority(item)}
+                        className={`px-4 py-2 rounded-full border text-sm transition-all ${data.budgetPriorities.includes(item) ? 'border-rose-500 bg-rose-500 text-white shadow-md' : 'border-gray-200 bg-white text-gray-600 hover:border-rose-300'}`}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Budget Flexibility</label>
+                  <div className="flex gap-4">
+                    {['strict', 'moderate', 'flexible'].map((flex) => (
+                      <label key={flex} className={`flex-1 cursor-pointer rounded-xl border p-3 text-center transition-all ${data.budgetFlexibility === flex ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm' : 'border-gray-200 bg-white hover:border-rose-200'}`}>
+                        <input type="radio" className="hidden" checked={data.budgetFlexibility === flex} onChange={() => handleChange('budgetFlexibility', flex)} />
+                        <span className="capitalize text-sm font-medium">{flex}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 5 && (
+              <div className="max-w-xl mx-auto space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Build Your Team</h2>
+                  <p className="text-gray-600">Invite your partner, planner, or family to collaborate.</p>
+                </div>
+
+                <div className="space-y-4">
+                  {data.collaborators.map((collab, index) => (
+                    <div key={index} className="flex gap-3 items-start bg-white/60 p-4 rounded-xl border border-gray-100 shadow-sm">
+                      <div className="flex-1 space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Name"
+                          value={collab.name}
+                          onChange={(e) => updateCollaborator(index, 'name', e.target.value)}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white ${errors[`collabName_${index}`] ? 'border-red-500' : 'border-gray-200'}`}
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          value={collab.email}
+                          onChange={(e) => updateCollaborator(index, 'email', e.target.value)}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white ${errors[`collabEmail_${index}`] ? 'border-red-500' : 'border-gray-200'}`}
+                        />
+                      </div>
+                      <div className="w-32 space-y-3">
+                        <select
+                          value={collab.role}
+                          onChange={(e) => updateCollaborator(index, 'role', e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
+                        >
+                          <option>Editor</option>
+                          <option>Viewer</option>
+                        </select>
+                        {data.collaborators.length > 1 && (
+                          <button 
+                            type="button" 
+                            onClick={() => removeCollaborator(index)}
+                            className="w-full flex justify-center py-2 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addCollaborator}
+                  className="w-full py-3 border-2 border-dashed border-rose-200 text-rose-600 rounded-xl font-medium hover:bg-rose-50 hover:border-rose-300 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" /> Add Another Collaborator
+                </button>
+              </div>
+            )}
+
+            {step === 6 && (
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-500 text-white mb-4 shadow-lg shadow-rose-200">
+                    <PartyPopper className="w-8 h-8" />
+                  </div>
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Ready to Launch!</h2>
+                  <p className="text-gray-600">Here's a quick summary of your beautiful plan.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                      <Heart className="w-4 h-4 text-rose-500" /> The Couple
+                    </h3>
+                    <p className="text-gray-600">{data.partner1Name} & {data.partner2Name}</p>
+                    <p className="text-sm text-gray-500">{data.email}</p>
+                  </div>
+                  
+                  <div className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                      <Calendar className="w-4 h-4 text-rose-500" /> The Details
+                    </h3>
+                    <p className="text-gray-600">{data.weddingDate ? new Date(data.weddingDate).toLocaleDateString() : 'TBD'}</p>
+                    <p className="text-sm text-gray-500">{data.estimatedGuests} Guests • {data.weddingStyle}</p>
+                  </div>
+
+                  <div className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                      <MapPin className="w-4 h-4 text-rose-500" /> The Venue
+                    </h3>
+                    <p className="text-gray-600">{data.venueName || 'Still searching'}</p>
+                    <p className="text-sm text-gray-500 capitalize">{data.venueType} • {data.season}</p>
+                  </div>
+
+                  <div className="bg-white/80 p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                      <PiggyBank className="w-4 h-4 text-rose-500" /> The Budget
+                    </h3>
+                    <p className="text-gray-600">${data.totalBudget.toLocaleString()}</p>
+                    <p className="text-sm text-gray-500 capitalize">{data.budgetFlexibility} Flexibility</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-8 py-5 border-t border-gray-200/50 bg-white/50 flex justify-between items-center">
+          <button
+            onClick={handlePrev}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <ChevronLeft className="w-5 h-5" /> Back
+          </button>
+          
+          {step < 6 ? (
+            <button
+              onClick={handleNext}
+              disabled={verifyingEmail}
+              className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-all shadow-md shadow-rose-200 hover:shadow-lg hover:shadow-rose-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {verifyingEmail ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Verifying Etsy Access...
+                </>
+              ) : (
+                <>
+                  Next Step <ChevronRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={handleComplete}
+              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl font-medium hover:from-rose-600 hover:to-amber-600 transition-all shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-200 active:scale-95 text-lg"
+            >
+              <Sparkles className="w-5 h-5" /> Launch Your Wedding Planner
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Onboarding;
