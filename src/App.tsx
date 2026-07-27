@@ -109,11 +109,15 @@ function AppContent() {
   };
 
   const handleOnboardingComplete = (data: OnboardingData) => {
+    const validDate = data.weddingDate && !isNaN(new Date(data.weddingDate).getTime())
+      ? new Date(data.weddingDate).toISOString()
+      : wedding.weddingDate || new Date('2027-06-18').toISOString();
+
     completeOnboarding({
-      partner1Name: data.partner1Name,
-      partner2Name: data.partner2Name,
-      email: data.email,
-      weddingDate: new Date(data.weddingDate).toISOString(),
+      partner1Name: data.partner1Name || wedding.partner1Name || 'Partner 1',
+      partner2Name: data.partner2Name || wedding.partner2Name || 'Partner 2',
+      email: data.email || wedding.email,
+      weddingDate: validDate,
       venueName: data.venueName || 'TBD',
       venueAddress: data.venueAddress || '',
       totalBudget: data.totalBudget,

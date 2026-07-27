@@ -65,7 +65,7 @@ const initialData: OnboardingData = {
 };
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const { wedding } = useWedding();
+  const { wedding, login } = useWedding();
   const sym = getCurrencySymbol(wedding?.currency);
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
@@ -76,8 +76,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [whitelistError, setWhitelistError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuthSubmit = async (e?: React.FormEvent, forceSkipToDashboard: boolean = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!data.email || !data.password) {
       setWhitelistError('Please enter both your email address and password.');
       return;
@@ -92,13 +92,20 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return;
       }
       setConfirmPassword(data.password);
-      const isSetupDone = localStorage.getItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`) === 'true';
+      const isSetupDone = forceSkipToDashboard || localStorage.getItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`) === 'true' || Boolean(wedding?.partner1Name && wedding?.partner1Name !== 'Partner 1');
       if (isSetupDone) {
-        onComplete({
-          ...data,
-          partner1Name: data.partner1Name || 'Partner 1',
-          partner2Name: data.partner2Name || 'Partner 2',
-        });
+        localStorage.setItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`, 'true');
+        if (login) {
+          login(data.email);
+        } else {
+          onComplete({
+            ...data,
+            partner1Name: wedding?.partner1Name || data.partner1Name || 'Partner 1',
+            partner2Name: wedding?.partner2Name || data.partner2Name || 'Partner 2',
+            weddingDate: wedding?.weddingDate || data.weddingDate || '2027-06-18',
+            totalBudget: wedding?.totalBudget || data.totalBudget || 15000,
+          });
+        }
       } else {
         setStep(1);
       }
@@ -331,18 +338,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!data.email || !data.password) {
-                        setWhitelistError('Please enter your email and password first.');
-                        return;
-                      }
-                      onComplete({
-                        ...data,
-                        partner1Name: data.partner1Name || 'Partner 1',
-                        partner2Name: data.partner2Name || 'Partner 2',
-                      });
-                    }}
-                    className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors text-[11px] font-semibold mt-1 flex items-center justify-center gap-1"
+                    onClick={(e) => handleAuthSubmit(e, true)}
+                    className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors text-[11px] font-semibold mt-1 flex items-center justify-center gap-1 cursor-pointer"
                   >
                     Already configured your wedding? Skip directly to Dashboard →
                   </button>

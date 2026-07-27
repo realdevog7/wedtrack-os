@@ -89,6 +89,7 @@ interface WeddingContextType {
   // Onboarding & Session
   isOnboarded: boolean;
   completeOnboarding: (data: Partial<WeddingProject>) => void;
+  login: (email?: string) => void;
   logout: () => void;
 
   // Utility
@@ -543,6 +544,16 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     logActivity('system', `Wedding project created for ${updated.partner1Name} & ${updated.partner2Name}!`);
   };
 
+  const login = (email?: string) => {
+    const updated = {
+      ...wedding,
+      email: email || wedding.email || 'realdevog@gmail.com',
+      onboardingComplete: true,
+    };
+    setWedding(updated);
+    logActivity('system', 'User logged back into session.');
+  };
+
   const logout = () => {
     const updated = {
       ...wedding,
@@ -608,6 +619,7 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         resetDataToSample,
         isOnboarded,
         completeOnboarding,
+        login,
         logout,
       }}
     >
