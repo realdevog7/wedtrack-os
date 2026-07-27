@@ -12,9 +12,37 @@ export interface WhitelistRecord {
 export const generateAutoPassword = (rawEmail: string): string => {
   const email = rawEmail.trim().toLowerCase();
   if (!email) return 'wedtrack2026';
+  
   const prefix = email.split('@')[0].replace(/[^a-z0-9]/g, '');
-  const cleanPrefix = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : 'Buyer';
-  return `${cleanPrefix}#2026`;
+  const base = prefix ? prefix.slice(0, 6) : 'buyer';
+  const Name = base.charAt(0).toUpperCase() + base.slice(1);
+  const name = base.toLowerCase();
+  const NAME = base.toUpperCase();
+
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = (hash << 5) - hash + email.charCodeAt(i);
+    hash |= 0;
+  }
+  const absHash = Math.abs(hash);
+  const type = absHash % 5;
+  const num = 10 + (absHash % 89); // 2-digit number 10-98
+  const year = 2026 + (absHash % 4); // 2026-2029
+
+  switch (type) {
+    case 0:
+      return `${Name}#${year}`;      // e.g., Sarah#2027
+    case 1:
+      return `${num}-${Name}!`;      // e.g., 42-Sarah!
+    case 2:
+      return `Wed@${name}${num}`;    // e.g., Wed@sarah85
+    case 3:
+      return `${NAME}_${num}W`;      // e.g., SARAH_63W
+    case 4:
+      return `Pass#${num}${name}`;   // e.g., Pass#19sarah
+    default:
+      return `${Name}#2026`;
+  }
 };
 
 const LOCAL_WHITELIST_KEY = 'wedtrack_whitelisted_emails';
@@ -101,9 +129,12 @@ export const checkEmailWhitelist = async (
   const verifyPassword = (targetPass?: string): boolean => {
     if (!pass) return true; // If no password required/checked yet
     const autoPass = generateAutoPassword(email);
+    const prefix = email.split('@')[0].replace(/[^a-z0-9]/g, '');
+    const oldPass = `${prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : 'Buyer'}#2026`;
     const validPasswords = [
       targetPass,
       autoPass,
+      oldPass,
       'etsy2026',
       'wedtrack',
       'password',
