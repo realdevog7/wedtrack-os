@@ -19,6 +19,7 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  Copy,
 } from 'lucide-react';
 import {
   getWhitelistedEmails,
@@ -26,6 +27,7 @@ import {
   deleteWhitelistedEmail,
   bulkAddWhitelistedEmails,
   WhitelistRecord,
+  generateAutoPassword,
 } from '../utils/whitelist';
 import { isFirebaseConfigured } from '../utils/firebase';
 
@@ -416,6 +418,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
                       className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:outline-none focus:border-indigo-500 text-xs text-slate-200 placeholder:text-slate-600"
                     />
                   </div>
+                  {singleEmail && (
+                    <div className="p-2.5 rounded-xl bg-pink-950/30 border border-pink-500/30 text-xs flex items-center justify-between font-mono text-pink-300">
+                      <span>🔑 Auto Password:</span>
+                      <strong className="tracking-wide">{generateAutoPassword(singleEmail)}</strong>
+                    </div>
+                  )}
                   <p className="text-[11px] text-slate-400 leading-relaxed">
                     Enter the exact email address the customer will use to register their wedding planner account.
                   </p>
@@ -488,19 +496,31 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
                         <span className="font-bold text-white block text-sm tracking-wide">
                           {item.email}
                         </span>
-                        <span className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                          Added:{' '}
-                          <strong className="text-slate-300 font-mono">
-                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Manual'}
-                          </strong>
-                        </span>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[11px] bg-pink-950/40 text-pink-300 px-2.5 py-0.5 rounded-lg border border-pink-500/30 font-mono flex items-center gap-1.5">
+                            <Key className="w-3 h-3 text-pink-400" />
+                            {item.password || generateAutoPassword(item.email)}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Added: {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Manual'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const pass = item.password || generateAutoPassword(item.email);
+                          navigator.clipboard.writeText(`Email: ${item.email}\nPassword: ${pass}`);
+                          setStatusMsg({ text: `Copied login details for ${item.email}!`, isError: false });
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 border border-slate-800 shadow-sm"
+                        title="Copy Access Details for Customer"
+                      >
+                        <Copy className="w-3.5 h-3.5 text-indigo-400" /> Copy Login
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(item.email)}

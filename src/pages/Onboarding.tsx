@@ -63,7 +63,8 @@ const initialData: OnboardingData = {
 };
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [data, setData] = useState<OnboardingData>(initialData);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -71,20 +72,48 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [whitelistError, setWhitelistError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!data.email || !data.password) {
+      setWhitelistError('Please enter both your email address and password.');
+      return;
+    }
+    setVerifyingEmail(true);
+    setWhitelistError(null);
+    try {
+      const res = await checkEmailWhitelist(data.email, data.password);
+      if (!res.allowed) {
+        setWhitelistError(res.reason || 'Authentication failed. Please check your credentials.');
+        setVerifyingEmail(false);
+        return;
+      }
+      setConfirmPassword(data.password);
+      if (authMode === 'login') {
+        onComplete({
+          ...data,
+          partner1Name: data.partner1Name || 'Partner 1',
+          partner2Name: data.partner2Name || 'Partner 2',
+        });
+      } else {
+        setStep(1);
+      }
+    } catch (err) {
+      console.error('Error verifying email & password:', err);
+      setWhitelistError('An error occurred during verification. Please try again.');
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
+
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
     if (step === 1) {
       if (!data.partner1Name) newErrors.partner1Name = 'Required';
       if (!data.partner2Name) newErrors.partner2Name = 'Required';
-      if (!data.email) newErrors.email = 'Required';
-      else if (!/\S+@\S+\.\S+/.test(data.email)) newErrors.email = 'Invalid email';
-      if (!data.password) newErrors.password = 'Required';
-      if (data.password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     } else if (step === 2) {
       if (!data.weddingDate) newErrors.weddingDate = 'Required';
     } else if (step === 3) {
-      // Allow empty if 'still searching' logic could be added, but for now we'll just check if it's there
-      // or we can make it optional
+      // Allow empty if 'still searching' logic could be added
     } else if (step === 4) {
       if (data.totalBudget <= 0) newErrors.totalBudget = 'Must be greater than 0';
     }
@@ -93,29 +122,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (validateStep()) {
-      if (step === 1) {
-        setVerifyingEmail(true);
-        setWhitelistError(null);
-        try {
-          const res = await checkEmailWhitelist(data.email);
-          if (!res.allowed) {
-            setWhitelistError(res.reason || 'This email address is not authorized.');
-            setVerifyingEmail(false);
-            return;
-          }
-        } catch (err) {
-          console.error('Error verifying email:', err);
-        }
-        setVerifyingEmail(false);
-      }
       setStep((prev) => Math.min(prev + 1, 5));
     }
   };
 
   const handlePrev = () => {
-    setStep((prev) => Math.max(prev - 1, 1));
+    setStep((prev) => Math.max(prev - 1, 0));
   };
 
   const handleComplete = () => {
@@ -205,33 +219,173 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <Heart className="w-6 h-6 text-rose-500 fill-rose-500/20" />
               WedTrack OS
             </h1>
-            <span className="text-sm font-medium text-gray-500">Step {step} of 5</span>
+            <span className="text-sm font-medium text-gray-500">
+              {step === 0 ? 'Account Access' : `Step ${step} of 5`}
+            </span>
           </div>
-          <div className="w-full flex justify-between gap-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  i <= step ? 'bg-rose-500' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
+          {step > 0 && (
+            <div className="w-full flex justify-between gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                    i <= step ? 'bg-rose-500' : 'bg-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
         <div className="flex-1 p-8 overflow-y-auto">
           <div className="step-container h-full" key={step}>
+            {step === 0 && (
+              <div className="max-w-md mx-auto space-y-5 py-2">
+                <div className="text-center mb-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100 text-rose-500 mb-3 shadow-sm">
+                    <Heart className="w-7 h-7 fill-rose-500/20" />
+                  </div>
+                  <h2 className="font-serif text-2xl text-gray-800 mb-1 font-bold">Welcome to WedTrack OS</h2>
+                  <p className="text-gray-600 text-xs">
+                    {authMode === 'signup'
+                      ? 'Activate your Etsy order to initialize your wedding suite.'
+                      : 'Log in to access your existing wedding dashboard.'}
+                  </p>
+                </div>
+
+                {/* Mode Switcher Tabs */}
+                <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-2xl border border-gray-200/80 text-xs font-bold text-center">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('signup'); setWhitelistError(null); }}
+                    className={`py-2.5 rounded-xl transition-all ${
+                      authMode === 'signup'
+                        ? 'bg-white text-rose-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    ✨ Sign Up / Activate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('login'); setWhitelistError(null); }}
+                    className={`py-2.5 rounded-xl transition-all ${
+                      authMode === 'login'
+                        ? 'bg-white text-rose-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    🔑 Log In
+                  </button>
+                </div>
+
+                <form onSubmit={handleAuthSubmit} className="space-y-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Etsy Order Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={data.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      placeholder="registered-email@gmail.com"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-gray-700">
+                        Access Password / PIN
+                      </label>
+                      <span className="text-[10px] text-gray-400">
+                        Check your Etsy purchase note
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={data.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        placeholder="e.g. Sarah#2026 or password"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all pr-10 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {whitelistError && (
+                    <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-xl flex items-start gap-2.5 text-left shadow-sm">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                      <div className="text-xs">
+                        <p className="font-bold text-xs mb-0.5">Authentication Required</p>
+                        <p className="text-rose-600 text-[11px] leading-relaxed">{whitelistError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={verifyingEmail || !data.email || !data.password}
+                    className="w-full py-3.5 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl font-bold hover:from-rose-600 hover:to-amber-600 transition-all shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-200 active:scale-95 flex items-center justify-center gap-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed mt-3"
+                  >
+                    {verifyingEmail ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Verifying Credentials...
+                      </>
+                    ) : authMode === 'signup' ? (
+                      <>
+                        Verify Access & Continue <ChevronRight className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        Log In to Dashboard <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="text-center pt-2 border-t border-gray-100">
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    Need help? Contact the seller via Etsy messages to retrieve your whitelisted email and auto-generated password.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {step === 1 && (
               <div className="max-w-xl mx-auto space-y-6">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-4">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-4 shadow-sm">
                     <Sparkles className="w-8 h-8" />
                   </div>
-                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Welcome to your journey</h2>
-                  <p className="text-gray-600">Let's create your account and meet the couple.</p>
+                  <h2 className="font-serif text-3xl text-gray-800 mb-2 font-bold">Welcome to your journey</h2>
+                  <p className="text-gray-600 text-sm">Let's personalize your account and meet the couple.</p>
                 </div>
                 
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3.5 rounded-2xl flex items-center justify-between text-xs font-medium shadow-sm mb-4">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Verified Etsy Account: <strong className="font-bold">{data.email}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="text-emerald-700 hover:underline text-[11px] font-bold"
+                  >
+                    Change Account
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Partner 1 Name</label>
@@ -242,6 +396,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner1Name ? 'border-red-500' : 'border-gray-200'}`}
                       placeholder="Jane Doe"
                     />
+                    {errors.partner1Name && <p className="text-red-500 text-xs mt-1">{errors.partner1Name}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Partner 2 Name</label>
@@ -252,58 +407,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner2Name ? 'border-red-500' : 'border-gray-200'}`}
                       placeholder="John Smith"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={data.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
-                    placeholder="hello@example.com"
-                  />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                </div>
-
-                {whitelistError && (
-                  <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl flex items-start gap-3 text-left shadow-sm">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
-                    <div className="text-xs">
-                      <p className="font-bold text-sm mb-1">Etsy Access Verification Required</p>
-                      <p className="text-rose-600 leading-relaxed">{whitelistError}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={data.password}
-                        onChange={(e) => handleChange('password', e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all pr-10 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
-                      />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        setErrors(prev => ({...prev, confirmPassword: ''}));
-                      }}
-                      className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`}
-                    />
-                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+                    {errors.partner2Name && <p className="text-red-500 text-xs mt-1">{errors.partner2Name}</p>}
                   </div>
                 </div>
               </div>
@@ -539,39 +643,41 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
 
         {/* Footer Actions */}
-        <div className="px-8 py-5 border-t border-gray-200/50 bg-white/50 flex justify-between items-center">
-          <button
-            onClick={handlePrev}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-gray-600 hover:bg-gray-100'}`}
-          >
-            <ChevronLeft className="w-5 h-5" /> Back
-          </button>
-          
-          {step < 5 ? (
+        {step > 0 && (
+          <div className="px-8 py-5 border-t border-gray-200/50 bg-white/50 flex justify-between items-center">
             <button
-              onClick={handleNext}
-              disabled={verifyingEmail}
-              className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-all shadow-md shadow-rose-200 hover:shadow-lg hover:shadow-rose-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={handlePrev}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-gray-600 hover:bg-gray-100'}`}
             >
-              {verifyingEmail ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" /> Verifying Etsy Access...
-                </>
-              ) : (
-                <>
-                  Next Step <ChevronRight className="w-5 h-5" />
-                </>
-              )}
+              <ChevronLeft className="w-5 h-5" /> Back
             </button>
-          ) : (
-            <button
-              onClick={handleComplete}
-              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl font-medium hover:from-rose-600 hover:to-amber-600 transition-all shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-200 active:scale-95 text-lg"
-            >
-              <Sparkles className="w-5 h-5" /> Launch Your Wedding Planner
-            </button>
-          )}
-        </div>
+            
+            {step < 5 ? (
+              <button
+                onClick={handleNext}
+                disabled={verifyingEmail}
+                className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-all shadow-md shadow-rose-200 hover:shadow-lg hover:shadow-rose-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {verifyingEmail ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Verifying Etsy Access...
+                  </>
+                ) : (
+                  <>
+                    Next Step <ChevronRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={handleComplete}
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl font-medium hover:from-rose-600 hover:to-amber-600 transition-all shadow-lg shadow-rose-200 hover:shadow-xl hover:shadow-rose-200 active:scale-95 text-lg"
+              >
+                <Sparkles className="w-5 h-5" /> Launch Your Wedding Planner
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

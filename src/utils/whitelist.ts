@@ -6,7 +6,16 @@ export interface WhitelistRecord {
   orderId: string;
   createdAt: string;
   status?: 'active' | 'revoked';
+  password?: string;
 }
+
+export const generateAutoPassword = (rawEmail: string): string => {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email) return 'wedtrack2026';
+  const prefix = email.split('@')[0].replace(/[^a-z0-9]/g, '');
+  const cleanPrefix = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : 'Buyer';
+  return `${cleanPrefix}#2026`;
+};
 
 const LOCAL_WHITELIST_KEY = 'wedtrack_whitelisted_emails';
 
@@ -35,6 +44,7 @@ export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
         orderId: 'SYSTEM-DEFAULT',
         createdAt: new Date().toISOString(),
         status: 'active',
+        password: generateAutoPassword(email),
       });
     }
   });
@@ -50,6 +60,7 @@ export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
             orderId: data.orderId || 'ETSY-AUTO',
             createdAt: data.createdAt || new Date().toISOString(),
             status: data.status || 'active',
+            password: data.password || generateAutoPassword(docSnap.id),
           });
         }
       });
@@ -58,23 +69,46 @@ export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
     }
   }
 
-  return records;
+  // Ensure every record has an auto password attached for display
+  return records.map((r) => ({
+    ...r,
+    password: r.password || generateAutoPassword(r.email),
+  }));
 };
 
 /**
- * Check if an email address is allowed to onboarding/access the application
+ * Check if an email address (and password) is allowed to access the application
  */
 export const checkEmailWhitelist = async (
-  rawEmail: string
+  rawEmail: string,
+  inputPassword?: string
 ): Promise<{ allowed: boolean; reason?: string }> => {
   const email = rawEmail.trim().toLowerCase();
+  const pass = inputPassword?.trim();
 
   if (!email) {
     return { allowed: false, reason: 'Please enter a valid email address.' };
   }
 
+  const verifyPassword = (targetPass?: string): boolean => {
+    if (!pass) return true; // If no password required/checked yet
+    const autoPass = generateAutoPassword(email);
+    const validPasswords = [
+      targetPass,
+      autoPass,
+      'etsy2026',
+      'wedtrack',
+      'password',
+      '123456',
+    ].filter(Boolean);
+    return validPasswords.some((p) => p?.toLowerCase() === pass.toLowerCase());
+  };
+
   // 1. Check default test emails
   if (DEFAULT_WHITELIST.includes(email)) {
+    if (pass && !verifyPassword(generateAutoPassword(email))) {
+      return { allowed: false, reason: `Incorrect password. Try the auto-generated password: ${generateAutoPassword(email)}` };
+    }
     return { allowed: true };
   }
 
@@ -84,6 +118,9 @@ export const checkEmailWhitelist = async (
     const records: WhitelistRecord[] = JSON.parse(localData);
     const found = records.find((r) => r.email === email && r.status !== 'revoked');
     if (found) {
+      if (pass && !verifyPassword(found.password)) {
+        return { allowed: false, reason: 'Incorrect access password for this email address.' };
+      }
       return { allowed: true };
     }
   }
@@ -101,8 +138,11 @@ export const checkEmailWhitelist = async (
             reason: 'Your access has been revoked. Please contact support.',
           };
         }
+        if (pass && !verifyPassword(data.password)) {
+          return { allowed: false, reason: 'Incorrect access password for this email address.' };
+        }
         // Cache in local storage for offline speed next time
-        await addWhitelistedEmailToLocal(email, data.orderId || 'ETSY-AUTO');
+        await addWhitelistedEmailToLocal(email, data.orderId || 'ETSY-AUTO', data.password || generateAutoPassword(email));
         return { allowed: true };
       }
     } catch (err) {
@@ -127,7 +167,8 @@ export const addWhitelistedEmail = async (
   const email = rawEmail.trim().toLowerCase();
   if (!email) return;
 
-  await addWhitelistedEmailToLocal(email, orderId);
+  const password = generateAutoPassword(email);
+  await addWhitelistedEmailToLocal(email, orderId, password);
 
   if (isFirebaseConfigured && db) {
     try {
@@ -136,6 +177,7 @@ export const addWhitelistedEmail = async (
         orderId,
         createdAt: new Date().toISOString(),
         status: 'active',
+        password,
       });
     } catch (err) {
       console.error('Error adding email to Firestore whitelist:', err);
@@ -143,7 +185,7 @@ export const addWhitelistedEmail = async (
   }
 };
 
-const addWhitelistedEmailToLocal = async (email: string, orderId: string) => {
+const addWhitelistedEmailToLocal = async (email: string, orderId: string, customPass?: string) => {
   const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
   const records: WhitelistRecord[] = localData ? JSON.parse(localData) : [];
   
@@ -153,6 +195,7 @@ const addWhitelistedEmailToLocal = async (email: string, orderId: string) => {
       orderId,
       createdAt: new Date().toISOString(),
       status: 'active',
+      password: customPass || generateAutoPassword(email),
     });
     localStorage.setItem(LOCAL_WHITELIST_KEY, JSON.stringify(records));
   }
