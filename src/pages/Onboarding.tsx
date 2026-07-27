@@ -87,11 +87,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       // or we can make it optional
     } else if (step === 4) {
       if (data.totalBudget <= 0) newErrors.totalBudget = 'Must be greater than 0';
-    } else if (step === 5) {
-      data.collaborators.forEach((collab, index) => {
-        if (!collab.name && collab.email) newErrors[`collabName_${index}`] = 'Required';
-        if (collab.email && !/\S+@\S+\.\S+/.test(collab.email)) newErrors[`collabEmail_${index}`] = 'Invalid email';
-      });
     }
 
     setErrors(newErrors);
@@ -115,7 +110,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         }
         setVerifyingEmail(false);
       }
-      setStep((prev) => Math.min(prev + 1, 6));
+      setStep((prev) => Math.min(prev + 1, 5));
     }
   };
 
@@ -210,10 +205,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <Heart className="w-6 h-6 text-rose-500 fill-rose-500/20" />
               WedTrack OS
             </h1>
-            <span className="text-sm font-medium text-gray-500">Step {step} of 6</span>
+            <span className="text-sm font-medium text-gray-500">Step {step} of 5</span>
           </div>
           <div className="w-full flex justify-between gap-2">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
@@ -496,65 +491,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             )}
 
             {step === 5 && (
-              <div className="max-w-xl mx-auto space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="font-serif text-3xl text-gray-800 mb-2">Build Your Team</h2>
-                  <p className="text-gray-600">Invite your partner, planner, or family to collaborate.</p>
-                </div>
-
-                <div className="space-y-4">
-                  {data.collaborators.map((collab, index) => (
-                    <div key={index} className="flex gap-3 items-start bg-white/60 p-4 rounded-xl border border-gray-100 shadow-sm">
-                      <div className="flex-1 space-y-3">
-                        <input
-                          type="text"
-                          placeholder="Name"
-                          value={collab.name}
-                          onChange={(e) => updateCollaborator(index, 'name', e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white ${errors[`collabName_${index}`] ? 'border-red-500' : 'border-gray-200'}`}
-                        />
-                        <input
-                          type="email"
-                          placeholder="Email address"
-                          value={collab.email}
-                          onChange={(e) => updateCollaborator(index, 'email', e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white ${errors[`collabEmail_${index}`] ? 'border-red-500' : 'border-gray-200'}`}
-                        />
-                      </div>
-                      <div className="w-32 space-y-3">
-                        <select
-                          value={collab.role}
-                          onChange={(e) => updateCollaborator(index, 'role', e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
-                        >
-                          <option>Editor</option>
-                          <option>Viewer</option>
-                        </select>
-                        {data.collaborators.length > 1 && (
-                          <button 
-                            type="button" 
-                            onClick={() => removeCollaborator(index)}
-                            className="w-full flex justify-center py-2 text-gray-400 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addCollaborator}
-                  className="w-full py-3 border-2 border-dashed border-rose-200 text-rose-600 rounded-xl font-medium hover:bg-rose-50 hover:border-rose-300 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" /> Add Another Collaborator
-                </button>
-              </div>
-            )}
-
-            {step === 6 && (
               <div className="max-w-2xl mx-auto space-y-8">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-500 text-white mb-4 shadow-lg shadow-rose-200">
@@ -611,7 +547,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <ChevronLeft className="w-5 h-5" /> Back
           </button>
           
-          {step < 6 ? (
+          {step < 5 ? (
             <button
               onClick={handleNext}
               disabled={verifyingEmail}
