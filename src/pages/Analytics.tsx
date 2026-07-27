@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import {
@@ -16,6 +17,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 export const Analytics: React.FC = () => {
   const { wedding, guests, tasks, vendors, budgetItems, tables } = useWedding();
+  const sym = getCurrencySymbol(wedding.currency);
 
   const exportExcelBudget = () => {
     const wsData = budgetItems.map((b) => ({
@@ -52,9 +54,9 @@ export const Analytics: React.FC = () => {
       25,
       70
     );
-    pdf.text(`• Budget: $${wedding.totalBudget.toLocaleString()}`, 25, 77);
+    pdf.text(`• Budget: ${sym}${wedding.totalBudget.toLocaleString()}`, 25, 77);
     pdf.text(
-      `• Total Spent: $${budgetItems.reduce((s, b) => s + b.actualAmount, 0).toLocaleString()}`,
+      `• Total Spent: ${sym}${budgetItems.reduce((s, b) => s + b.actualAmount, 0).toLocaleString()}`,
       25,
       84
     );
@@ -200,7 +202,7 @@ export const Analytics: React.FC = () => {
     const totalQuoted = vendors.reduce((s, v) => s + v.quotedCost, 0);
     const totalDeposit = vendors.reduce((s, v) => s + (v.depositAmount || 0), 0);
     pdf.setFontSize(10);
-    pdf.text(`Total Vendors: ${vendors.length}   |   Quoted Total: $${totalQuoted.toLocaleString()}   |   Deposits Paid: $${totalDeposit.toLocaleString()}`, 15, currentY);
+    pdf.text(`Total Vendors: ${vendors.length}   |   Quoted Total: ${sym}${totalQuoted.toLocaleString()}   |   Deposits Paid: ${sym}${totalDeposit.toLocaleString()}`, 15, currentY);
     currentY += 6;
 
     pdf.setDrawColor(203, 213, 225);
@@ -227,7 +229,7 @@ export const Analytics: React.FC = () => {
       pdf.text(`Contact: ${vendor.contactPerson || 'N/A'}   |   Phone: ${vendor.phone || 'N/A'}   |   Email: ${vendor.email || 'N/A'}`, 15, currentY);
       currentY += 5;
 
-      pdf.text(`Quoted Cost: $${vendor.quotedCost.toLocaleString()}   |   Actual: $${vendor.actualCost.toLocaleString()}   |   Payment: ${vendor.paymentStatus} ($${vendor.depositAmount || 0} deposit)`, 15, currentY);
+      pdf.text(`Quoted Cost: ${sym}${vendor.quotedCost.toLocaleString()}   |   Actual: ${sym}${vendor.actualCost.toLocaleString()}   |   Payment: ${vendor.paymentStatus} (${sym}${vendor.depositAmount || 0} deposit)`, 15, currentY);
       currentY += 5;
 
       if (vendor.notes) {

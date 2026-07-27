@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 import { BudgetItem } from '../types';
 import {
   PieChart as PieIcon,
@@ -31,6 +32,7 @@ import {
 export const Budget: React.FC = () => {
   const { wedding, budgetItems, updateWedding, addBudgetItem, updateBudgetItem, deleteBudgetItem } =
     useWedding();
+  const sym = getCurrencySymbol(wedding.currency);
 
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<BudgetItem | null>(null);
@@ -172,7 +174,7 @@ export const Budget: React.FC = () => {
           <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-bounce" />
           <div>
             <span className="font-bold">Budget Warning:</span> You have utilized {spentRatio}% of
-            your overall ${totalBudget.toLocaleString()} wedding budget.
+            your overall {sym}{totalBudget.toLocaleString()} wedding budget.
           </div>
         </div>
       )}
@@ -184,7 +186,7 @@ export const Budget: React.FC = () => {
             Total Target Budget
           </p>
           <h3 className="font-serif font-bold text-2xl mt-1 text-slate-900 dark:text-slate-100">
-            ${totalBudget.toLocaleString()}
+            {sym}{totalBudget.toLocaleString()}
           </h3>
           <span className="text-[11px] text-slate-400">Set in Wedding Settings</span>
         </div>
@@ -194,7 +196,7 @@ export const Budget: React.FC = () => {
             Total Allocated
           </p>
           <h3 className="font-serif font-bold text-2xl mt-1 text-slate-900 dark:text-slate-100">
-            ${totalAllocated.toLocaleString()}
+            {sym}{totalAllocated.toLocaleString()}
           </h3>
           <span className="text-[11px] text-slate-400">Sum of estimated category limits</span>
         </div>
@@ -204,10 +206,10 @@ export const Budget: React.FC = () => {
             Actual Spent
           </p>
           <h3 className="font-serif font-bold text-2xl mt-1 text-rose-600 dark:text-rose-400">
-            ${totalSpent.toLocaleString()}
+            {sym}{totalSpent.toLocaleString()}
           </h3>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            ${totalPaid.toLocaleString()} Deposit Paid
+            {sym}{totalPaid.toLocaleString()} Deposit Paid
           </span>
         </div>
 
@@ -220,7 +222,7 @@ export const Budget: React.FC = () => {
               remainingBudget < 0 ? 'text-rose-600' : 'text-emerald-600 dark:text-emerald-400'
             }`}
           >
-            ${remainingBudget.toLocaleString()}
+            {sym}{remainingBudget.toLocaleString()}
           </h3>
           <span className="text-[11px] text-slate-400">Available to allocate</span>
         </div>
@@ -315,13 +317,13 @@ export const Budget: React.FC = () => {
                     </td>
                     <td className="py-3 text-slate-500">{item.category}</td>
                     <td className="py-3 text-slate-600 dark:text-slate-300">
-                      ${item.allocatedAmount.toLocaleString()}
+                      {sym}{item.allocatedAmount.toLocaleString()}
                     </td>
                     <td className="py-3 font-bold text-rose-600 dark:text-rose-400">
-                      ${item.actualAmount.toLocaleString()}
+                      {sym}{item.actualAmount.toLocaleString()}
                     </td>
                     <td className="py-3 text-emerald-600 dark:text-emerald-400 font-semibold">
-                      ${item.paidAmount.toLocaleString()}
+                      {sym}{item.paidAmount.toLocaleString()}
                     </td>
                     <td className="py-3 text-right space-x-1">
                       <button
@@ -358,7 +360,7 @@ export const Budget: React.FC = () => {
 
           <div className="space-y-3 text-xs font-medium">
             <div>
-              <label className="block text-slate-500 mb-1">Contract / Bill Total ($)</label>
+              <label className="block text-slate-500 mb-1">Contract / Bill Total ({sym})</label>
               <input
                 type="number"
                 value={tipVendorCost}
@@ -390,10 +392,10 @@ export const Budget: React.FC = () => {
             <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-center space-y-1">
               <span className="text-slate-500 text-[11px] block">Suggested Gratuity Tip</span>
               <span className="font-serif font-bold text-2xl text-rose-600 dark:text-rose-400 block">
-                ${calculatedTipAmount.toLocaleString()}
+                {sym}{calculatedTipAmount.toLocaleString()}
               </span>
               <span className="text-[10px] text-slate-400">
-                Total with Tip: ${(tipVendorCost + calculatedTipAmount).toLocaleString()}
+                Total with Tip: {sym}{(tipVendorCost + calculatedTipAmount).toLocaleString()}
               </span>
             </div>
           </div>
@@ -463,7 +465,7 @@ export const Budget: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-slate-500 mb-1">Allocated ($)</label>
+                  <label className="block text-slate-500 mb-1">Allocated ({sym})</label>
                   <input
                     type="number"
                     value={allocatedAmount}
@@ -473,7 +475,7 @@ export const Budget: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1">Actual ($)</label>
+                  <label className="block text-slate-500 mb-1">Actual ({sym})</label>
                   <input
                     type="number"
                     value={actualAmount}
@@ -483,7 +485,7 @@ export const Budget: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 mb-1">Paid ($)</label>
+                  <label className="block text-slate-500 mb-1">Paid ({sym})</label>
                   <input
                     type="number"
                     value={paidAmount}

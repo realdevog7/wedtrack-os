@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWedding } from '../contexts/WeddingContext';
 import {
   Settings as SettingsIcon,
@@ -103,8 +103,12 @@ export const Settings: React.FC = () => {
   const [showPin, setShowPin] = useState(false);
 
   // Preferences State
-  const [currency, setCurrency] = useState('$ (USD)');
+  const [currency, setCurrency] = useState(wedding.currency || '$ (USD)');
   const [timezone, setTimezone] = useState('America/New_York');
+
+  useEffect(() => {
+    if (wedding.currency) setCurrency(wedding.currency);
+  }, [wedding.currency]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'project' | 'security' | 'preferences'>('project');
@@ -375,7 +379,10 @@ export const Settings: React.FC = () => {
               </label>
               <select
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                onChange={(e) => {
+                  setCurrency(e.target.value);
+                  updateWedding({ currency: e.target.value });
+                }}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-rose-500 max-h-60"
               >
                 {worldCurrencies.map((c) => (
@@ -426,6 +433,7 @@ export const Settings: React.FC = () => {
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
             <button
               onClick={() => {
+                updateWedding({ currency });
                 setSavedSuccess(true);
                 setTimeout(() => setSavedSuccess(false), 2000);
               }}

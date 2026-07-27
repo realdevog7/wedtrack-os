@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 import { getDeadlineDisplay } from '../utils/dateUtils';
 import {
   PiggyBank,
@@ -24,6 +25,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onQuickAdd }) => {
   const { wedding, guests, tasks, vendors, budgetItems, activities } = useWedding();
+  const sym = getCurrencySymbol(wedding.currency);
 
   // 1. Budget Calculations
   const totalBudget = wedding.totalBudget;
@@ -123,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onQuickAdd }
               Total Budget
             </p>
             <h3 className="font-serif font-bold text-lg sm:text-2xl mt-1 text-slate-900 dark:text-slate-100">
-              ${totalProjected.toLocaleString()} / ${totalBudget.toLocaleString()}
+              {sym}{totalProjected.toLocaleString()} / {sym}{totalBudget.toLocaleString()}
             </h3>
             <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
               <div
@@ -132,7 +134,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab, onQuickAdd }
               />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex justify-between">
-              <span>Remaining: ${remainingBudget.toLocaleString()}</span>
+              <span>Remaining: {sym}{remainingBudget.toLocaleString()}</span>
               <span className="group-hover:translate-x-1 transition-transform flex items-center gap-0.5 text-rose-600 font-semibold">
                 Details <ChevronRight className="w-3 h-3" />
               </span>

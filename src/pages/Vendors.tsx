@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 import { Vendor, VendorCategory, VendorStatus, PaymentStatus } from '../types';
 import {
   Briefcase,
@@ -19,7 +20,8 @@ import {
 } from 'lucide-react';
 
 export const Vendors: React.FC = () => {
-  const { vendors, addVendor, updateVendor, deleteVendor, addVendorLog } = useWedding();
+  const { wedding, vendors, addVendor, updateVendor, deleteVendor, addVendorLog } = useWedding();
+  const sym = getCurrencySymbol(wedding.currency);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
@@ -262,7 +264,7 @@ export const Vendors: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-500">Quoted Cost:</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    ${vendor.quotedCost.toLocaleString()}
+                    {sym}{vendor.quotedCost.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -396,7 +398,7 @@ export const Vendors: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 dark:text-slate-300 mb-1">
-                    Quoted Amount ($)
+                    Quoted Amount ({sym})
                   </label>
                   <input
                     type="number"

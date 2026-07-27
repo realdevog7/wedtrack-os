@@ -16,10 +16,12 @@ import { Settings } from './pages/Settings';
 import { AdminPortal } from './pages/AdminPortal';
 import { Onboarding, OnboardingData } from './pages/Onboarding';
 import { PublicRsvp } from './pages/PublicRsvp';
+import { getCurrencySymbol } from './utils/currency';
 import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X } from 'lucide-react';
 
 function AppContent() {
-  const { isOnboarded, completeOnboarding, guests, tasks, vendors, budgetItems } = useWedding();
+  const { wedding, isOnboarded, completeOnboarding, guests, tasks, vendors, budgetItems } = useWedding();
+  const sym = getCurrencySymbol(wedding?.currency);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -387,7 +389,7 @@ function AppContent() {
                                 {b.description || 'Budget Item'}
                               </p>
                               <p className="text-[11px] text-slate-500">
-                                {b.category} • ${(b.allocatedAmount || 0).toLocaleString()}
+                                {b.category} • {sym}{(b.allocatedAmount || 0).toLocaleString()}
                               </p>
                             </div>
                             <ArrowRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
