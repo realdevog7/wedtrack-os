@@ -24,13 +24,27 @@ function AppContent() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRsvpPortal, setIsRsvpPortal] = useState(() => window.location.hash.startsWith('#rsvp'));
+  const [isAdminPortal, setIsAdminPortal] = useState(() =>
+    window.location.hash.startsWith('#admin') ||
+    window.location.search.includes('admin=true') ||
+    window.location.pathname.startsWith('/admin')
+  );
 
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleNavigationChange = () => {
       setIsRsvpPortal(window.location.hash.startsWith('#rsvp'));
+      setIsAdminPortal(
+        window.location.hash.startsWith('#admin') ||
+        window.location.search.includes('admin=true') ||
+        window.location.pathname.startsWith('/admin')
+      );
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleNavigationChange);
+    window.addEventListener('popstate', handleNavigationChange);
+    return () => {
+      window.removeEventListener('hashchange', handleNavigationChange);
+      window.removeEventListener('popstate', handleNavigationChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -133,6 +147,25 @@ function AppContent() {
     );
   }
 
+  if (isAdminPortal) {
+    return (
+      <AdminPortal
+        onExit={() => {
+          window.location.hash = '';
+          if (window.location.search.includes('admin=true')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('admin');
+            window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+          }
+          if (window.location.pathname.startsWith('/admin')) {
+            window.history.replaceState({}, '', '/');
+          }
+          setIsAdminPortal(false);
+        }}
+      />
+    );
+  }
+
   // Show onboarding wizard if not yet completed
   if (!isOnboarded) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
@@ -169,8 +202,6 @@ function AppContent() {
         return <Files />;
       case 'settings':
         return <Settings />;
-      case 'admin':
-        return <AdminPortal />;
       default:
         return <Dashboard setActiveTab={setActiveTab} onQuickAdd={handleQuickAction} />;
     }

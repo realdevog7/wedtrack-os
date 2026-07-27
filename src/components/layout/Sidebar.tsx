@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     const nextClicks = heartClicks + 1;
     if (nextClicks >= 5) {
       setHeartClicks(0);
-      setActiveTab('admin');
+      window.location.hash = '#admin';
     } else {
       setHeartClicks(nextClicks);
     }

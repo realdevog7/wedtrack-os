@@ -29,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onS
     const nextClicks = heartClicks + 1;
     if (nextClicks >= 5) {
       setHeartClicks(0);
+      window.location.hash = '#admin';
       onSecretAdmin?.();
     } else {
       setHeartClicks(nextClicks);

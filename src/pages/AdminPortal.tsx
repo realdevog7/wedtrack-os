@@ -29,7 +29,11 @@ import {
 } from '../utils/whitelist';
 import { isFirebaseConfigured } from '../utils/firebase';
 
-export const AdminPortal: React.FC = () => {
+interface AdminPortalProps {
+  onExit?: () => void;
+}
+
+export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
   // Session authentication state (Master Key lock screen)
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     return sessionStorage.getItem('etsy_admin_unlocked') === 'true';
@@ -178,7 +182,15 @@ export const AdminPortal: React.FC = () => {
   // ---------------------------------------------------------------------------
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-[#050811] text-slate-100 flex items-center justify-center p-6 select-none font-sans">
+      <div className="min-h-screen bg-[#050811] text-slate-100 flex items-center justify-center p-6 select-none font-sans relative">
+        {onExit && (
+          <button
+            onClick={onExit}
+            className="absolute top-6 left-6 px-4 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-2 border border-slate-800 shadow-lg z-20"
+          >
+            ← Return to Wedding Planner
+          </button>
+        )}
         <div className="max-w-md w-full bg-[#0c101d] rounded-3xl p-8 border border-slate-800 shadow-2xl shadow-pink-500/10 space-y-6 relative overflow-hidden">
           <div className="absolute -right-20 -top-20 w-60 h-60 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -274,7 +286,15 @@ export const AdminPortal: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-start sm:self-center relative z-10">
+          <div className="flex items-center gap-3 self-start sm:self-center relative z-10 flex-wrap">
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-2 border border-slate-800 shadow-lg"
+              >
+                ← Return to Wedding Planner
+              </button>
+            )}
             <button
               onClick={handleExportCsv}
               className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-semibold transition-all flex items-center gap-2 border border-slate-800 shadow-lg"
