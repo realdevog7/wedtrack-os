@@ -56,11 +56,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onS
         </button>
         <button
           onClick={onOpenSearch}
-          className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-xs font-medium transition-all w-full sm:w-64 border border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+          className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-xs font-medium transition-all w-auto sm:w-64 border border-transparent hover:border-slate-300 dark:hover:border-slate-600"
         >
-          <Search className="w-4 h-4 text-slate-400" />
-          <span>Search guests, tasks, vendors...</span>
-          <kbd className="ml-auto text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded font-mono text-slate-400">
+          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+          <span className="hidden md:inline">Search guests, tasks, vendors...</span>
+          <span className="md:hidden">Search...</span>
+          <kbd className="hidden sm:inline-block ml-auto text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded font-mono text-slate-400">
             ⌘K
           </kbd>
         </button>
@@ -68,11 +69,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onS
       </div>
 
       {/* Action buttons & notification center */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Quick Action dropdown */}
         <div className="relative group">
-          <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all">
-            <Plus className="w-4 h-4" />
+          <button className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all">
+            <Plus className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Quick Add</span>
           </button>
           <div className="absolute right-0 sm:right-0 mt-1 w-48 sm:w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50 py-1.5 text-xs font-medium">
@@ -100,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onS
         {/* Share Public Link */}
         <button
           onClick={handleCopyShareLink}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors shrink-0"
           title="Share RSVP Portal Link"
         >
           {copiedLink ? (

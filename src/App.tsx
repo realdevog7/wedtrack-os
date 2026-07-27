@@ -17,12 +17,13 @@ import { AdminPortal } from './pages/AdminPortal';
 import { Onboarding, OnboardingData } from './pages/Onboarding';
 import { PublicRsvp } from './pages/PublicRsvp';
 import { getCurrencySymbol } from './utils/currency';
-import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X } from 'lucide-react';
+import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight } from 'lucide-react';
 
 function AppContent() {
   const { wedding, isOnboarded, completeOnboarding, guests, tasks, vendors, budgetItems } = useWedding();
   const sym = getCurrencySymbol(wedding?.currency);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showMobileMore, setShowMobileMore] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRsvpPortal, setIsRsvpPortal] = useState(() => window.location.hash.startsWith('#rsvp'));
@@ -228,34 +229,113 @@ function AppContent() {
           onSecretAdmin={() => setActiveTab('admin')}
         />
 
-        {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around py-2 px-1 overflow-x-auto scrollbar-none">
+        {/* Mobile Art-Style Floating Glass Dock */}
+        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl border border-white/60 dark:border-slate-800/80 rounded-2xl shadow-2xl shadow-slate-900/10 dark:shadow-black/50 flex items-center justify-around py-2 px-1.5 transition-all duration-300">
           {[
-            { id: 'dashboard', label: '🏠' },
-            { id: 'guests', label: '👥' },
-            { id: 'timeline', label: '📅' },
-            { id: 'budget', label: '💰' },
-            { id: 'vendors', label: '🏢' },
-            { id: 'seating', label: '🪑' },
-            { id: 'settings', label: '⚙️' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-medium transition-all min-w-[3.5rem] ${
-                activeTab === item.id
-                  ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 font-bold'
-                  : 'text-slate-500'
-              }`}
-            >
-              <span className="text-lg">{item.label}</span>
-              <span className="capitalize">{item.id === 'dashboard' ? 'Home' : item.id}</span>
-            </button>
-          ))}
+            { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+            { id: 'guests', label: 'Guests', icon: Users },
+            { id: 'timeline', label: 'Timeline', icon: Calendar },
+            { id: 'budget', label: 'Budget', icon: DollarSign },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id && !showMobileMore;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setShowMobileMore(false);
+                }}
+                className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all duration-300 cursor-pointer ${
+                  isActive
+                    ? 'text-white bg-gradient-to-r from-rose-500 to-pink-500 shadow-lg shadow-rose-500/30 scale-105 font-bold'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setShowMobileMore(!showMobileMore)}
+            className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all duration-300 cursor-pointer ${
+              showMobileMore || !['dashboard', 'guests', 'timeline', 'budget'].includes(activeTab)
+                ? 'text-white bg-gradient-to-r from-rose-500 to-pink-500 shadow-lg shadow-rose-500/30 scale-105 font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/50'
+            }`}
+          >
+            <LayoutGrid className="w-5 h-5" />
+            <span>More</span>
+          </button>
         </div>
 
+        {/* Mobile "More" Bottom Sheet Drawer */}
+        {showMobileMore && (
+          <div
+            className="lg:hidden fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm animate-fade-in flex flex-col justify-end pb-24"
+            onClick={() => setShowMobileMore(false)}
+          >
+            <div
+              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-slate-800/80 rounded-t-3xl shadow-2xl p-5 space-y-4 max-h-[70vh] overflow-y-auto animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-rose-500" />
+                  <h3 className="font-serif font-bold text-base text-slate-900 dark:text-slate-100">All Planning Modules</h3>
+                </div>
+                <button
+                  onClick={() => setShowMobileMore(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'vendors', label: 'Vendor Hub', desc: 'Quotes & Contacts', icon: Building2, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/50' },
+                  { id: 'seating', label: 'Table Seating', desc: 'Floor Planner', icon: LayoutGrid, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/50' },
+                  { id: 'meals', label: 'Meal Menus', desc: 'Dietary Tracker', icon: Utensils, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-200/50' },
+                  { id: 'automation', label: 'Email Blasts', desc: 'RSVP Reminders', icon: Send, color: 'text-sky-500 bg-sky-50 dark:bg-sky-950/40 border-sky-200/50' },
+                  { id: 'analytics', label: 'Analytics', desc: 'Reports & Charts', icon: BarChart2, color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/40 border-purple-200/50' },
+                  { id: 'files', label: 'File Vault', desc: 'Contracts & Docs', icon: Folder, color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/40 border-blue-200/50' },
+                  { id: 'settings', label: 'Settings', desc: 'Security & Currency', icon: SettingsIcon, color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40 border-rose-200/50' },
+                ].map((mod) => {
+                  const ModIcon = mod.icon;
+                  const isModActive = activeTab === mod.id;
+                  return (
+                    <button
+                      key={mod.id}
+                      onClick={() => {
+                        setActiveTab(mod.id);
+                        setShowMobileMore(false);
+                      }}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                        isModActive
+                          ? 'border-rose-500 bg-rose-500/10 dark:bg-rose-500/20 shadow-md ring-2 ring-rose-500/20'
+                          : 'border-slate-200/70 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${mod.color}`}>
+                        <ModIcon className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{mod.label}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{mod.desc}</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto pb-28 lg:pb-0">
           {renderPage()}
         </main>
       </div>
