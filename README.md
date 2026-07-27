@@ -2,6 +2,10 @@
 
 **WedTrack OS** is a state-of-the-art, responsive, and comprehensive wedding planning operating system designed to simplify every aspect of modern wedding organization. Built with performance, aesthetics, and user experience in mind, it empowers couples and planners to collaborate seamlessly.
 
+> [!IMPORTANT]
+> 📖 **Looking for the complete architectural breakdown and feature guide?**  
+> Read our full [Master MVP Documentation Guide (MVP_DOCUMENTATION.md)](./MVP_DOCUMENTATION.md) for a comprehensive overview of basic features, advanced algorithms, multi-currency engines, and the Etsy Seller Suite!
+
 ---
 
 ## ✨ Key Features
