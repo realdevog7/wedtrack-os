@@ -180,8 +180,8 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       type,
       message,
       timestamp: 'Just now',
-      userEmail: wedding.collaborators[0]?.email || 'sophia@example.com',
-      userName: wedding.collaborators[0]?.name || 'Sophia Lin',
+      userEmail: wedding.collaborators[0]?.email || 'admin@wedtrack.com',
+      userName: wedding.collaborators[0]?.name || (wedding.partner1Name ? `${wedding.partner1Name} & ${wedding.partner2Name}` : 'WedTrack OS'),
     };
     setActivities((prev) => [newLog, ...prev.slice(0, 49)]);
   };
@@ -390,7 +390,7 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
             id: uuidv4(),
             date: new Date().toISOString().split('T')[0],
             ...logData,
-            authorName: wedding.collaborators[0]?.name || 'Sophia Lin',
+            authorName: wedding.collaborators[0]?.name || (wedding.partner1Name ? `${wedding.partner1Name} & ${wedding.partner2Name}` : 'WedTrack OS'),
           };
           return { ...v, communicationLog: [newLog, ...v.communicationLog] };
         }

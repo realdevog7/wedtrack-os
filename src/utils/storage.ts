@@ -129,7 +129,19 @@ export function saveEmailCampaigns(campaigns: EmailCampaign[]): void {
 }
 
 export function loadEmailTemplates(): EmailTemplate[] {
-  return getItem(KEYS.TEMPLATES, INITIAL_EMAIL_TEMPLATES);
+  const templates = getItem(KEYS.TEMPLATES, INITIAL_EMAIL_TEMPLATES);
+  return templates.map((t) => {
+    if (t.name === 'RSVP Reminder' && !t.body.includes('{{rsvpLink}}') && !t.body.includes('{{rsvp_link}}')) {
+      return {
+        ...t,
+        body: t.body.replace(
+          'Please let us know if you will be able to join us.',
+          'Please let us know if you will be able to join us by updating your RSVP here:\n{{rsvpLink}}'
+        ),
+      };
+    }
+    return t;
+  });
 }
 
 export function saveEmailTemplates(templates: EmailTemplate[]): void {

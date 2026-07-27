@@ -177,12 +177,12 @@ export const Automation: React.FC = () => {
       .replace(/\{\{partner2Name\}\}/g, wedding.partner2Name || 'Partner 2')
       .replace(/\{\{partner2_name\}\}/g, wedding.partner2Name || 'Partner 2')
       // RSVP link
-      .replace(/\{\{rsvp_link\}\}/g, 'https://ourweddingplanner.app/rsvp')
-      .replace(/\{\{rsvpLink\}\}/g, 'https://ourweddingplanner.app/rsvp');
+      .replace(/\{\{rsvp_link\}\}/g, `${window.location.origin}/#rsvp-${wedding.publicShareSlug || wedding.id}`)
+      .replace(/\{\{rsvpLink\}\}/g, `${window.location.origin}/#rsvp-${wedding.publicShareSlug || wedding.id}`);
   };
 
   const formatTemplatePreview = (text: string) => {
-    const sampleGuest = guests[0] || { firstName: 'Sophia', lastName: 'Miller' };
+    const sampleGuest = guests[0] || { firstName: 'Alex', lastName: 'Johnson' };
     return replaceTags(text, `${sampleGuest.firstName} ${sampleGuest.lastName}`);
   };
 
@@ -505,7 +505,7 @@ export const Automation: React.FC = () => {
               <p className="text-xs text-slate-500">
                 Use tags like <code className="text-rose-500 font-mono">{'{{guestName}}'}</code>,{' '}
                 <code className="text-rose-500 font-mono">{'{{weddingDate}}'}</code>,{' '}
-                <code className="text-rose-500 font-mono">{'{{partner1Name}}'}</code> for auto-fill.
+                <code className="text-rose-500 font-mono">{'{{rsvpLink}}'}</code> for auto-fill.
               </p>
             </div>
             <button
@@ -892,6 +892,13 @@ export const Automation: React.FC = () => {
                       className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-indigo-500 font-mono font-bold hover:bg-slate-200"
                     >
                       + P2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTmplBody((prev) => prev + '\n\nUpdate your RSVP here:\n{{rsvpLink}}')}
+                      className="bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded text-amber-600 dark:text-amber-400 font-mono font-bold hover:bg-amber-200"
+                    >
+                      + RSVP Link
                     </button>
                   </div>
                 </div>

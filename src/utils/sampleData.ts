@@ -33,6 +33,6 @@ export const INITIAL_EMAIL_TEMPLATES: EmailTemplate[] = [
     id: 'tpl-2',
     name: 'RSVP Reminder',
     subject: 'Action Required: RSVP for {{partner1Name}} & {{partner2Name}}\'s Wedding',
-    body: 'Dear {{guestName}},\n\nWe hope this email finds you well! This is a friendly reminder that the RSVP deadline for our wedding is approaching.\n\nPlease let us know if you will be able to join us.\n\nBest,\n{{partner1Name}} & {{partner2Name}}',
+    body: 'Dear {{guestName}},\n\nWe hope this email finds you well! This is a friendly reminder that the RSVP deadline for our wedding is approaching.\n\nPlease let us know if you will be able to join us by updating your RSVP here:\n{{rsvpLink}}\n\nBest,\n{{partner1Name}} & {{partner2Name}}',
   }
 ];
