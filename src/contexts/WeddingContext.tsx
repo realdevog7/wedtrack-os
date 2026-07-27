@@ -86,9 +86,10 @@ interface WeddingContextType {
   updateDietaryOption: (oldName: string, newName: string) => void;
   deleteDietaryOption: (name: string) => void;
 
-  // Onboarding
+  // Onboarding & Session
   isOnboarded: boolean;
   completeOnboarding: (data: Partial<WeddingProject>) => void;
+  logout: () => void;
 
   // Utility
   logActivity: (type: ActivityLog['type'], message: string) => void;
@@ -542,6 +543,15 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     logActivity('system', `Wedding project created for ${updated.partner1Name} & ${updated.partner2Name}!`);
   };
 
+  const logout = () => {
+    const updated = {
+      ...wedding,
+      onboardingComplete: false,
+    };
+    setWedding(updated);
+    logActivity('system', 'User logged out of the session.');
+  };
+
   return (
     <WeddingContext.Provider
       value={{
@@ -598,6 +608,7 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         resetDataToSample,
         isOnboarded,
         completeOnboarding,
+        logout,
       }}
     >
       {children}

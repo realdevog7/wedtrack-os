@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Trash2,
   RefreshCw,
+  LogOut,
 } from 'lucide-react';
 
 const worldCurrencies = [
@@ -78,7 +79,7 @@ const worldCurrencies = [
 ];
 
 export const Settings: React.FC = () => {
-  const { wedding, updateWedding, resetDataToSample } = useWedding();
+  const { wedding, updateWedding, resetDataToSample, logout } = useWedding();
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
@@ -142,11 +143,20 @@ export const Settings: React.FC = () => {
           </p>
         </div>
 
-        {savedSuccess && (
-          <div className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200 shadow-sm">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> All settings successfully saved!
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {savedSuccess && (
+            <div className="px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200 shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> All settings successfully saved!
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-800 text-xs font-semibold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            title="Log Out of WedTrack OS"
+          >
+            <LogOut className="w-4 h-4 text-rose-500" /> Log Out
+          </button>
+        </div>
       </div>
 
       {/* Navigation Tabs */}
@@ -358,6 +368,27 @@ export const Settings: React.FC = () => {
                 </button>
               </div>
             )}
+
+            {/* Account Session & Logout */}
+            <div className="glass-panel rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 space-y-4 mt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <LogOut className="w-5 h-5 text-rose-500 shrink-0" /> Account Session
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                    You are currently logged into WedTrack OS. Logging out will end your current session and return you to the account credential screen.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="px-5 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-500/20 flex items-center gap-2 transition-all shrink-0 active:scale-95 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" /> Log Out Now
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
