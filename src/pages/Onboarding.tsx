@@ -16,9 +16,11 @@ import {
   PartyPopper,
   X,
   AlertCircle,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { checkEmailWhitelist } from '../utils/whitelist';
+import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 
 export interface OnboardingData {
   partner1Name: string;
@@ -63,6 +65,8 @@ const initialData: OnboardingData = {
 };
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+  const { wedding } = useWedding();
+  const sym = getCurrencySymbol(wedding?.currency);
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [data, setData] = useState<OnboardingData>(initialData);
@@ -544,7 +548,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <PiggyBank className="w-4 h-4 text-rose-500" /> Total Budget
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-2.5 text-gray-500 font-medium">$</span>
+                    <span className="absolute left-4 top-2.5 text-gray-500 font-medium">{sym}</span>
                     <input
                       type="number"
                       value={data.totalBudget || ''}
@@ -623,7 +627,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
                       <PiggyBank className="w-4 h-4 text-rose-500" /> The Budget
                     </h3>
-                    <p className="text-gray-600">${data.totalBudget.toLocaleString()}</p>
+                    <p className="text-gray-600">{sym}{data.totalBudget.toLocaleString()}</p>
                     <p className="text-sm text-gray-500 capitalize">{data.budgetFlexibility} Flexibility</p>
                   </div>
                 </div>

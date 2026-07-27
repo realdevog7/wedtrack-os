@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWedding } from '../contexts/WeddingContext';
+import { getCurrencySymbol } from '../utils/currency';
 import {
   Settings as SettingsIcon,
   Shield,
@@ -105,6 +106,7 @@ export const Settings: React.FC = () => {
   // Preferences State
   const [currency, setCurrency] = useState(wedding.currency || '$ (USD)');
   const [timezone, setTimezone] = useState('America/New_York');
+  const sym = getCurrencySymbol(currency);
 
   useEffect(() => {
     if (wedding.currency) setCurrency(wedding.currency);
@@ -236,8 +238,8 @@ export const Settings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5 flex items-center gap-1">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Total Master Budget ($)
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5 flex items-center gap-1.5">
+                  <span className="text-emerald-500 font-bold">{sym}</span> Total Master Budget ({sym})
                 </label>
                 <input
                   type="number"
