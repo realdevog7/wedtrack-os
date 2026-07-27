@@ -35,10 +35,11 @@ const DEFAULT_WHITELIST = [
 export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
   const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
   let records: WhitelistRecord[] = localData ? JSON.parse(localData) : [];
+  const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
 
-  // Add default testing records if they don't exist yet
+  // Add default testing records if they don't exist yet and haven't been deleted
   DEFAULT_WHITELIST.forEach((email) => {
-    if (!records.some((r) => r.email === email)) {
+    if (!records.some((r) => r.email === email) && !deletedList.includes(email)) {
       records.push({
         email,
         orderId: 'SYSTEM-DEFAULT',
@@ -54,7 +55,7 @@ export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
       const querySnapshot = await getDocs(collection(db, 'whitelisted_users'));
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data() as WhitelistRecord;
-        if (!records.some((r) => r.email === docSnap.id)) {
+        if (!records.some((r) => r.email === docSnap.id) && !deletedList.includes(docSnap.id)) {
           records.push({
             email: docSnap.id,
             orderId: data.orderId || 'ETSY-AUTO',
@@ -69,11 +70,13 @@ export const getWhitelistedEmails = async (): Promise<WhitelistRecord[]> => {
     }
   }
 
-  // Ensure every record has an auto password attached for display
-  return records.map((r) => ({
-    ...r,
-    password: r.password || generateAutoPassword(r.email),
-  }));
+  // Ensure every record has an auto password attached for display and filter out deleted
+  return records
+    .filter((r) => !deletedList.includes(r.email))
+    .map((r) => ({
+      ...r,
+      password: r.password || generateAutoPassword(r.email),
+    }));
 };
 
 /**
@@ -88,6 +91,11 @@ export const checkEmailWhitelist = async (
 
   if (!email) {
     return { allowed: false, reason: 'Please enter a valid email address.' };
+  }
+
+  const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+  if (deletedList.includes(email)) {
+    return { allowed: false, reason: 'Your access has been revoked by the administrator.' };
   }
 
   const verifyPassword = (targetPass?: string): boolean => {
@@ -167,6 +175,11 @@ export const addWhitelistedEmail = async (
   const email = rawEmail.trim().toLowerCase();
   if (!email) return;
 
+  const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+  if (deletedList.includes(email)) {
+    localStorage.setItem('wedtrack_deleted_emails', JSON.stringify(deletedList.filter((e) => e !== email)));
+  }
+
   const password = generateAutoPassword(email);
   await addWhitelistedEmailToLocal(email, orderId, password);
 
@@ -212,6 +225,12 @@ export const deleteWhitelistedEmail = async (rawEmail: string): Promise<void> =>
     const records: WhitelistRecord[] = JSON.parse(localData);
     const filtered = records.filter((r) => r.email !== email);
     localStorage.setItem(LOCAL_WHITELIST_KEY, JSON.stringify(filtered));
+  }
+
+  const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+  if (!deletedList.includes(email)) {
+    deletedList.push(email);
+    localStorage.setItem('wedtrack_deleted_emails', JSON.stringify(deletedList));
   }
 
   if (isFirebaseConfigured && db) {
