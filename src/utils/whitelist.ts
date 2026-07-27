@@ -121,7 +121,13 @@ export const checkEmailWhitelist = async (
     return { allowed: false, reason: 'Please enter a valid email address.' };
   }
 
-  const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+  let deletedList: string[] = [];
+  try {
+    deletedList = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+  } catch (e) {
+    console.warn('Corrupted deleted emails list in localStorage');
+  }
+
   if (deletedList.includes(email)) {
     return { allowed: false, reason: 'Your access has been revoked by the administrator.' };
   }
@@ -154,13 +160,17 @@ export const checkEmailWhitelist = async (
   // 2. Check local storage whitelist
   const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
   if (localData) {
-    const records: WhitelistRecord[] = JSON.parse(localData);
-    const found = records.find((r) => r.email === email && r.status !== 'revoked');
-    if (found) {
-      if (pass && !verifyPassword(found.password)) {
-        return { allowed: false, reason: 'Incorrect access password for this email address.' };
+    try {
+      const records: WhitelistRecord[] = JSON.parse(localData);
+      const found = records.find((r) => r.email === email && r.status !== 'revoked');
+      if (found) {
+        if (pass && !verifyPassword(found.password)) {
+          return { allowed: false, reason: 'Incorrect access password for this email address.' };
+        }
+        return { allowed: true };
       }
-      return { allowed: true };
+    } catch (e) {
+      console.warn('Corrupted local whitelist data in localStorage');
     }
   }
 

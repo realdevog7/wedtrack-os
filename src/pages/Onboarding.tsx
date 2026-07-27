@@ -88,7 +88,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return;
       }
       setConfirmPassword(data.password);
-      if (authMode === 'login') {
+      const isSetupDone = localStorage.getItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`) === 'true';
+      if (isSetupDone) {
         onComplete({
           ...data,
           partner1Name: data.partner1Name || 'Partner 1',
@@ -134,6 +135,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const handleComplete = () => {
     if (validateStep()) {
+      if (data.email) {
+        localStorage.setItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`, 'true');
+      }
       onComplete(data);
     }
   };
@@ -242,42 +246,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <div className="step-container h-full" key={step}>
             {step === 0 && (
               <div className="max-w-md mx-auto space-y-5 py-2">
-                <div className="text-center mb-5">
+                <div className="text-center mb-6">
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100 text-rose-500 mb-3 shadow-sm">
                     <Heart className="w-7 h-7 fill-rose-500/20" />
                   </div>
                   <h2 className="font-serif text-2xl text-gray-800 mb-1 font-bold">Welcome to WedTrack OS</h2>
                   <p className="text-gray-600 text-xs">
-                    {authMode === 'signup'
-                      ? 'Activate your Etsy order to initialize your wedding suite.'
-                      : 'Log in to access your existing wedding dashboard.'}
+                    Enter your whitelisted Etsy order email and access PIN to launch your wedding suite.
                   </p>
-                </div>
-
-                {/* Mode Switcher Tabs */}
-                <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-2xl border border-gray-200/80 text-xs font-bold text-center">
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('signup'); setWhitelistError(null); }}
-                    className={`py-2.5 rounded-xl transition-all ${
-                      authMode === 'signup'
-                        ? 'bg-white text-rose-600 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    ✨ Sign Up / Activate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('login'); setWhitelistError(null); }}
-                    className={`py-2.5 rounded-xl transition-all ${
-                      authMode === 'login'
-                        ? 'bg-white text-rose-600 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    🔑 Log In
-                  </button>
                 </div>
 
                 <form onSubmit={handleAuthSubmit} className="space-y-4 pt-1">
@@ -342,15 +318,29 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" /> Verifying Credentials...
                       </>
-                    ) : authMode === 'signup' ? (
-                      <>
-                        Verify Access & Continue <ChevronRight className="w-4 h-4" />
-                      </>
                     ) : (
                       <>
-                        Log In to Dashboard <ChevronRight className="w-4 h-4" />
+                        ✨ Access My Wedding Suite <ChevronRight className="w-4 h-4" />
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!data.email || !data.password) {
+                        setWhitelistError('Please enter your email and password first.');
+                        return;
+                      }
+                      onComplete({
+                        ...data,
+                        partner1Name: data.partner1Name || 'Partner 1',
+                        partner2Name: data.partner2Name || 'Partner 2',
+                      });
+                    }}
+                    className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors text-[11px] font-semibold mt-1 flex items-center justify-center gap-1"
+                  >
+                    Already configured your wedding? Skip directly to Dashboard →
                   </button>
                 </form>
 
