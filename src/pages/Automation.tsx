@@ -450,7 +450,7 @@ export const Automation: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-center text-xs border border-slate-200/50 dark:border-slate-700/50">
                     <div>
                       <span className="font-bold block text-slate-900 dark:text-slate-100 text-sm">
-                        {camp.sentCount}
+                        {getMatchingGuestCount(camp.recipientFilter, camp)}
                       </span>
                       <span className="text-[10px] text-slate-400">Recipients</span>
                     </div>

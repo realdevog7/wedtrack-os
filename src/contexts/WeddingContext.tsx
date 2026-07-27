@@ -449,11 +449,15 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const sendCampaignNow = (campaignId: string) => {
     setEmailCampaigns((prev) =>
-      prev.map((c) =>
-        c.id === campaignId
-          ? { ...c, status: 'sent', sentCount: guests.length, openRate: 88, clickRate: 72 }
-          : c
-      )
+      prev.map((c) => {
+        if (c.id !== campaignId) return c;
+        let count = guests.length;
+        if (c.recipientFilter === 'custom' && c.customGuestIds) count = c.customGuestIds.length;
+        else if (c.recipientFilter === 'confirmed') count = guests.filter((g) => g.rsvpStatus === 'confirmed').length;
+        else if (c.recipientFilter === 'unconfirmed') count = guests.filter((g) => g.rsvpStatus !== 'confirmed' && g.rsvpStatus !== 'declined').length;
+        else if (c.recipientFilter === 'declined') count = guests.filter((g) => g.rsvpStatus === 'declined').length;
+        return { ...c, status: 'sent', sentCount: count, openRate: 88, clickRate: 72 };
+      })
     );
     logActivity('system', 'Dispatched automated email campaign blast');
   };
