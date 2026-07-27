@@ -197,4 +197,11 @@ export function resetAllDataToSample(): void {
   localStorage.setItem(KEYS.TEMPLATES, JSON.stringify(INITIAL_EMAIL_TEMPLATES));
   localStorage.setItem(KEYS.MEALS, JSON.stringify(DEFAULT_MEALS));
   localStorage.setItem(KEYS.DIETARY, JSON.stringify(DEFAULT_DIETARY));
+
+  // Clear onboarding setup flags so relogin triggers onboarding wizard
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('wedtrack_setup_done_')) {
+      localStorage.removeItem(key);
+    }
+  });
 }

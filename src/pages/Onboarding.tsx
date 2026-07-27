@@ -92,7 +92,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return;
       }
       setConfirmPassword(data.password);
-      const isSetupDone = forceSkipToDashboard || localStorage.getItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`) === 'true' || Boolean(wedding?.partner1Name && wedding?.partner1Name !== 'Partner 1');
+      const isProjectConfigured = Boolean(
+        wedding?.onboardingComplete ||
+        (wedding?.partner1Name && wedding?.partner1Name.trim() !== '' && wedding?.partner1Name !== 'Partner 1') ||
+        (wedding?.totalBudget && wedding?.totalBudget > 0)
+      );
+      const isSetupDone = forceSkipToDashboard || (localStorage.getItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`) === 'true' && isProjectConfigured);
       if (isSetupDone) {
         localStorage.setItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`, 'true');
         if (login) {
