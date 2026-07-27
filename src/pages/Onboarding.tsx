@@ -239,7 +239,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="text"
                       value={data.partner1Name}
                       onChange={(e) => handleChange('partner1Name', e.target.value)}
-                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner1Name ? 'border-red-500' : 'border-gray-200'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner1Name ? 'border-red-500' : 'border-gray-200'}`}
                       placeholder="Jane Doe"
                     />
                   </div>
@@ -249,7 +249,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="text"
                       value={data.partner2Name}
                       onChange={(e) => handleChange('partner2Name', e.target.value)}
-                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner2Name ? 'border-red-500' : 'border-gray-200'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.partner2Name ? 'border-red-500' : 'border-gray-200'}`}
                       placeholder="John Smith"
                     />
                   </div>
@@ -261,7 +261,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     type="email"
                     value={data.email}
                     onChange={(e) => handleChange('email', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
                     placeholder="hello@example.com"
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -285,7 +285,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         type={showPassword ? "text" : "password"}
                         value={data.password}
                         onChange={(e) => handleChange('password', e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all pr-10 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
+                        className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all pr-10 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -301,7 +301,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         setConfirmPassword(e.target.value);
                         setErrors(prev => ({...prev, confirmPassword: ''}));
                       }}
-                      className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
                   </div>
@@ -324,7 +324,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     type="date"
                     value={data.weddingDate}
                     onChange={(e) => handleChange('weddingDate', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.weddingDate ? 'border-red-500' : 'border-gray-200'}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all ${errors.weddingDate ? 'border-red-500' : 'border-gray-200'}`}
                   />
                 </div>
 
@@ -356,7 +356,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <select
                       value={data.weddingType}
                       onChange={(e) => handleChange('weddingType', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
                     >
                       {['Traditional', 'Destination', 'Intimate/Elopement', 'Cultural', 'Garden Party', 'Black Tie Gala'].map(t => (
                         <option key={t} value={t}>{t}</option>
@@ -368,7 +368,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <select
                       value={data.weddingStyle}
                       onChange={(e) => handleChange('weddingStyle', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all appearance-none"
                     >
                       {['Romantic', 'Modern Minimalist', 'Rustic Chic', 'Bohemian', 'Classic Elegance', 'Glamorous', 'Vintage'].map(s => (
                         <option key={s} value={s}>{s}</option>
@@ -395,7 +395,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="text"
                       value={data.venueName}
                       onChange={(e) => handleChange('venueName', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
                       placeholder="e.g. The Grand Plaza (or 'Still searching')"
                     />
                   </div>
@@ -406,7 +406,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="text"
                       value={data.venueAddress}
                       onChange={(e) => handleChange('venueAddress', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all"
                       placeholder="e.g. New York, NY"
                     />
                   </div>
@@ -455,7 +455,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="number"
                       value={data.totalBudget || ''}
                       onChange={(e) => handleChange('totalBudget', parseFloat(e.target.value) || 0)}
-                      className={`w-full pl-8 pr-4 py-2.5 rounded-xl border bg-white/50 focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-lg font-medium ${errors.totalBudget ? 'border-red-500' : 'border-gray-200'}`}
+                      className={`w-full pl-8 pr-4 py-2.5 rounded-xl border bg-white text-gray-900 placeholder:text-gray-400 font-medium shadow-sm focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all text-lg font-medium ${errors.totalBudget ? 'border-red-500' : 'border-gray-200'}`}
                     />
                   </div>
                 </div>
