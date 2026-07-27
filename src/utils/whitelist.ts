@@ -8,10 +8,12 @@ export interface WhitelistRecord {
   status?: 'active' | 'revoked';
 }
 
-const LOCAL_WHITELIST_KEY = 'aethelgard_whitelisted_emails';
+const LOCAL_WHITELIST_KEY = 'wedtrack_whitelisted_emails';
 
 // Default emails that are always whitelisted for dev/testing
 const DEFAULT_WHITELIST = [
+  'realdevog@gmail.com',
+  'admin@wedtrack.com',
   'admin@aethelgard.com',
   'sophia@example.com',
   'demo@example.com',
