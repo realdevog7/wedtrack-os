@@ -653,7 +653,7 @@ export const Guests: React.FC<GuestsProps> = ({ setActiveTab, defaultTab = 'list
           </select>
 
           {selectedGuestIds.length > 0 && (
-            <div className="flex items-center gap-2 animate-fade-in">
+            <div className="flex flex-wrap items-center gap-2 animate-fade-in mt-2 md:mt-0">
               <button
                 onClick={() => {
                   setBulkRsvp('no_change');
@@ -710,7 +710,7 @@ export const Guests: React.FC<GuestsProps> = ({ setActiveTab, defaultTab = 'list
       {/* Guest Data Table */}
       <div className="glass-panel rounded-3xl overflow-hidden">
         <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs min-w-[800px]">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 text-slate-500 font-semibold uppercase tracking-wider">
                 <th className="p-4 w-10">

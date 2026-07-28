@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { WeddingProvider, useWedding } from './contexts/WeddingContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -17,9 +17,10 @@ import { AdminPortal } from './pages/AdminPortal';
 import { Onboarding, OnboardingData } from './pages/Onboarding';
 import { PublicRsvp } from './pages/PublicRsvp';
 import { getCurrencySymbol } from './utils/currency';
-import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight } from 'lucide-react';
+import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight, Sun, Moon } from 'lucide-react';
 
 function AppContent() {
+  const { isDark, setTheme } = useTheme();
   const { wedding, isOnboarded, completeOnboarding, guests, tasks, vendors, budgetItems } = useWedding();
   const sym = getCurrencySymbol(wedding?.currency);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -285,12 +286,20 @@ function AppContent() {
                   <Sparkles className="w-5 h-5 text-rose-500" />
                   <h3 className="font-serif font-bold text-base text-slate-900 dark:text-slate-100">All Planning Modules</h3>
                 </div>
-                <button
-                  onClick={() => setShowMobileMore(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
+                  <button
+                    onClick={() => setShowMobileMore(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
