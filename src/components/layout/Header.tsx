@@ -22,6 +22,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onSecretAdmin }) => {
   const { wedding, activities } = useWedding();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [heartClicks, setHeartClicks] = useState(0);
 
@@ -71,29 +72,33 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSearch, onQuickAction, onS
       {/* Action buttons & notification center */}
       <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Quick Action dropdown */}
-        <div className="relative group">
-          <button className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all">
+        <div className="relative" onMouseLeave={() => setShowQuickAdd(false)}>
+          <button 
+            onClick={() => setShowQuickAdd(!showQuickAdd)}
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-md shadow-rose-500/20 transition-all cursor-pointer"
+          >
             <Plus className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Quick Add</span>
           </button>
-          <div className="absolute right-0 sm:right-0 mt-1 w-48 sm:w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50 py-1.5 text-xs font-medium">
+          
+          <div className={`absolute right-0 sm:right-0 mt-1 w-48 sm:w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl transition-all duration-200 z-50 py-1.5 text-xs font-medium ${showQuickAdd ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2'}`}>
             <button
-              onClick={() => onQuickAction('guest')}
-              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2"
+              onClick={() => { onQuickAction('guest'); setShowQuickAdd(false); }}
+              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-rose-500" /> Add New Guest
             </button>
             <button
-              onClick={() => onQuickAction('task')}
-              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2"
+              onClick={() => { onQuickAction('task'); setShowQuickAdd(false); }}
+              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2 cursor-pointer"
             >
-              <Clock className="w-3.5 h-3.5 text-amber-500" /> Add Timeline Task
+              <CheckCircle2 className="w-3.5 h-3.5 text-rose-500" /> Add Task
             </button>
             <button
-              onClick={() => onQuickAction('vendor')}
-              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2"
+              onClick={() => { onQuickAction('vendor'); setShowQuickAdd(false); }}
+              className="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Add Vendor Quote
+              <Heart className="w-3.5 h-3.5 text-rose-500" /> Add Vendor
             </button>
           </div>
         </div>
