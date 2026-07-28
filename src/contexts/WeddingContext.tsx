@@ -91,6 +91,7 @@ interface WeddingContextType {
   completeOnboarding: (data: Partial<WeddingProject>) => void;
   login: (email?: string) => void;
   logout: () => void;
+  checkAndLoadRemoteData: (email: string) => Promise<boolean>;
 
   // Utility
   logActivity: (type: ActivityLog['type'], message: string) => void;
@@ -113,13 +114,14 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [mealOptions, setMealOptions] = useState<string[]>(storage.loadMealOptions);
   const [dietaryOptions, setDietaryOptions] = useState<string[]>(storage.loadDietaryOptions);
 
-  // Load from Firestore on mount if configured
-  useEffect(() => {
-    if (!isFirebaseConfigured) return;
-    const fetchRemote = async () => {
-      const remoteWedding = await firestoreSync.loadWeddingFromFirestore();
-      if (remoteWedding) setWedding(remoteWedding);
-
+  const checkAndLoadRemoteData = async (email: string): Promise<boolean> => {
+    if (!isFirebaseConfigured) return false;
+    firestoreSync.setFirestoreEmail(email);
+    
+    const remoteWedding = await firestoreSync.loadWeddingFromFirestore();
+    if (remoteWedding) {
+      setWedding(remoteWedding);
+      
       const remoteGuests = await firestoreSync.loadCollectionFromFirestore<Guest>('guests');
       if (remoteGuests) setGuests(remoteGuests);
 
@@ -134,8 +136,17 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const remoteBudget = await firestoreSync.loadCollectionFromFirestore<BudgetItem>('budget');
       if (remoteBudget) setBudgetItems(remoteBudget);
-    };
-    fetchRemote();
+      
+      return true;
+    }
+    return false;
+  };
+
+  // Load from Firestore on mount if configured and we have an email
+  useEffect(() => {
+    if (wedding.email) {
+      checkAndLoadRemoteData(wedding.email);
+    }
   }, []);
 
   // Sync state to LocalStorage and Firestore
@@ -625,6 +636,7 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         completeOnboarding,
         login,
         logout,
+        checkAndLoadRemoteData,
       }}
     >
       {children}

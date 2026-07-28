@@ -65,7 +65,7 @@ const initialData: OnboardingData = {
 };
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const { wedding, login } = useWedding();
+  const { wedding, login, checkAndLoadRemoteData } = useWedding();
   const sym = getCurrencySymbol(wedding?.currency);
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
@@ -92,10 +92,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return;
       }
       setConfirmPassword(data.password);
+      const hasRemoteData = await checkAndLoadRemoteData(data.email);
       const isProjectConfigured = Boolean(
         wedding?.onboardingComplete ||
         (wedding?.partner1Name && wedding?.partner1Name.trim() !== '' && wedding?.partner1Name !== 'Partner 1') ||
-        (wedding?.totalBudget && wedding?.totalBudget > 0)
+        (wedding?.totalBudget && wedding?.totalBudget > 0) ||
+        hasRemoteData
       );
       const isSetupDone = forceSkipToDashboard || isProjectConfigured;
       if (isSetupDone) {

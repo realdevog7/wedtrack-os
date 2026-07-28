@@ -2,7 +2,14 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import { WeddingProject, Guest, Table, Task, Vendor, BudgetItem, FileDoc, ActivityLog, EmailCampaign } from '../types';
 
-const WEDDING_DOC_ID = 'current_wedding';
+let WEDDING_DOC_ID = 'current_wedding';
+
+export const setFirestoreEmail = (email: string) => {
+  if (email && email.trim() !== '') {
+    // Firestore doc IDs can't contain forward slashes, but emails don't have them.
+    WEDDING_DOC_ID = email.trim().toLowerCase();
+  }
+};
 
 // Helper to remove undefined properties before saving to Firestore
 const sanitizeForFirestore = (data: any): any => {
@@ -22,7 +29,7 @@ const sanitizeForFirestore = (data: any): any => {
 };
 
 export const syncWeddingToFirestore = async (wedding: WeddingProject) => {
-  if (!isFirebaseConfigured || !db) return;
+  if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return;
   try {
     await setDoc(doc(db, 'weddings', WEDDING_DOC_ID), sanitizeForFirestore(wedding), { merge: true });
   } catch (err) {
@@ -31,7 +38,7 @@ export const syncWeddingToFirestore = async (wedding: WeddingProject) => {
 };
 
 export const syncCollectionToFirestore = async (collectionName: string, items: any[]) => {
-  if (!isFirebaseConfigured || !db) return;
+  if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return;
   try {
     await setDoc(doc(db, 'weddings', WEDDING_DOC_ID, 'collections', collectionName), { items: sanitizeForFirestore(items) }, { merge: true });
   } catch (err) {
@@ -40,7 +47,7 @@ export const syncCollectionToFirestore = async (collectionName: string, items: a
 };
 
 export const loadWeddingFromFirestore = async (): Promise<WeddingProject | null> => {
-  if (!isFirebaseConfigured || !db) return null;
+  if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return null;
   try {
     const snap = await getDoc(doc(db, 'weddings', WEDDING_DOC_ID));
     if (snap.exists()) {
@@ -53,7 +60,7 @@ export const loadWeddingFromFirestore = async (): Promise<WeddingProject | null>
 };
 
 export const loadCollectionFromFirestore = async <T>(collectionName: string): Promise<T[] | null> => {
-  if (!isFirebaseConfigured || !db) return null;
+  if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return null;
   try {
     const snap = await getDoc(doc(db, 'weddings', WEDDING_DOC_ID, 'collections', collectionName));
     if (snap.exists()) {
