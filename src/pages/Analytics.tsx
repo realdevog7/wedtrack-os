@@ -70,7 +70,7 @@ export const Analytics: React.FC = () => {
     );
     pdf.text(`• Budget: ${sym}${wedding.totalBudget.toLocaleString()}`, 25, 77);
     pdf.text(
-      `• Total Spent: ${sym}${budgetItems.reduce((s, b) => s + b.actualAmount, 0).toLocaleString()}`,
+      `• Total Spent: ${sym}${totalSpent.toLocaleString()}`,
       25,
       84
     );
@@ -82,10 +82,21 @@ export const Analytics: React.FC = () => {
   // -------------------------------------------------------------
 
   // 1. Budget Breakdown
-  const budgetByCategory = budgetItems.reduce((acc, curr) => {
-    acc[curr.category] = (acc[curr.category] || 0) + curr.actualAmount;
-    return acc;
-  }, {} as Record<string, number>);
+  const budgetByCategory: Record<string, number> = {};
+
+  budgetItems.forEach(b => {
+    budgetByCategory[b.category] = (budgetByCategory[b.category] || 0) + b.actualAmount;
+  });
+
+  vendors.forEach(v => {
+    // Avoid double counting if the vendor is explicitly linked to a budget item
+    const hasLinkedBudgetItem = budgetItems.some(b => b.vendorId === v.id);
+    if (!hasLinkedBudgetItem) {
+      // If actualCost is 0 but they have a quoted cost, use quoted cost as the estimated spend
+      const costToUse = v.actualCost > 0 ? v.actualCost : v.quotedCost;
+      budgetByCategory[v.category] = (budgetByCategory[v.category] || 0) + costToUse;
+    }
+  });
 
   const totalSpent = Object.values(budgetByCategory).reduce((a, b) => a + b, 0);
   
