@@ -157,24 +157,7 @@ export const checkEmailWhitelist = async (
     return { allowed: true };
   }
 
-  // 2. Check local storage whitelist
-  const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
-  if (localData) {
-    try {
-      const records: WhitelistRecord[] = JSON.parse(localData);
-      const found = records.find((r) => r.email === email && r.status !== 'revoked');
-      if (found) {
-        if (pass && !verifyPassword(found.password)) {
-          return { allowed: false, reason: 'Incorrect access password for this email address.' };
-        }
-        return { allowed: true };
-      }
-    } catch (e) {
-      console.warn('Corrupted local whitelist data in localStorage');
-    }
-  }
-
-  // 3. Check Firestore (where Google Forms / Apps Script writes the data)
+  // 2. Check Firestore FIRST if configured (Source of Truth)
   if (isFirebaseConfigured && db) {
     try {
       const docRef = doc(db, 'whitelisted_users', email);
@@ -193,9 +176,33 @@ export const checkEmailWhitelist = async (
         // Cache in local storage for offline speed next time
         await addWhitelistedEmailToLocal(email, data.orderId || 'ETSY-AUTO', data.password || generateAutoPassword(email));
         return { allowed: true };
+      } else {
+        // If Firebase is configured and the doc DOES NOT exist, they are explicitly not whitelisted.
+        // We must block them, even if local storage says otherwise (prevents cached logins for deleted users)
+        return {
+          allowed: false,
+          reason: 'This email address is not yet activated. Please ensure you entered the exact email registered with your Etsy purchase, or contact the seller for access.'
+        };
       }
     } catch (err) {
       console.error('Error checking Firestore whitelist:', err);
+    }
+  }
+
+  // 3. Check local storage whitelist (Offline fallback only)
+  const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
+  if (localData) {
+    try {
+      const records: WhitelistRecord[] = JSON.parse(localData);
+      const found = records.find((r) => r.email === email && r.status !== 'revoked');
+      if (found) {
+        if (pass && !verifyPassword(found.password)) {
+          return { allowed: false, reason: 'Incorrect access password for this email address.' };
+        }
+        return { allowed: true };
+      }
+    } catch (e) {
+      console.warn('Corrupted local whitelist data in localStorage');
     }
   }
 
@@ -276,9 +283,25 @@ export const deleteWhitelistedEmail = async (rawEmail: string): Promise<void> =>
 
   if (isFirebaseConfigured && db) {
     try {
+      // 1. Delete from whitelist
       await deleteDoc(doc(db, 'whitelisted_users', email));
+
+      // 2. Wipe ALL client data from weddings collection to enforce data privacy
+      const weddingDocRef = doc(db, 'weddings', email);
+      
+      // Delete subcollections (guests, tasks, vendors, budget, tables, files)
+      const subcollections = ['guests', 'tasks', 'vendors', 'budget', 'tables', 'files'];
+      for (const sub of subcollections) {
+        const subRef = doc(db, 'weddings', email, 'collections', sub);
+        await deleteDoc(subRef).catch(() => {}); // Catch safely if doesn't exist
+      }
+
+      // Finally delete the main wedding document
+      await deleteDoc(weddingDocRef).catch(() => {});
+
+      console.log(`Successfully wiped all data for ${email}`);
     } catch (err) {
-      console.error('Error deleting email from Firestore whitelist:', err);
+      console.error('Error deleting email and wiping data from Firestore:', err);
     }
   }
 };
