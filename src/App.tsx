@@ -17,11 +17,12 @@ import { AdminPortal } from './pages/AdminPortal';
 import { Onboarding, OnboardingData } from './pages/Onboarding';
 import { PublicRsvp } from './pages/PublicRsvp';
 import { getCurrencySymbol } from './utils/currency';
+import { checkEmailWhitelist } from './utils/whitelist';
 import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight, Sun, Moon } from 'lucide-react';
 
 function AppContent() {
   const { isDark, setTheme } = useTheme();
-  const { wedding, isOnboarded, completeOnboarding, guests, tasks, vendors, budgetItems } = useWedding();
+  const { wedding, isOnboarded, completeOnboarding, logout, guests, tasks, vendors, budgetItems } = useWedding();
   const sym = getCurrencySymbol(wedding?.currency);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showMobileMore, setShowMobileMore] = useState(false);
@@ -64,6 +65,19 @@ function AppContent() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Enforce whitelist check constantly, kicking user out if their access is revoked by Admin
+  useEffect(() => {
+    const verifyAccess = async () => {
+      if (isOnboarded && wedding?.email) {
+        const { allowed } = await checkEmailWhitelist(wedding.email);
+        if (!allowed) {
+          logout();
+        }
+      }
+    };
+    verifyAccess();
+  }, [isOnboarded, wedding?.email, logout]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return { guests: [], tasks: [], vendors: [], budget: [] };
