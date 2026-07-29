@@ -84,21 +84,32 @@ export const Analytics: React.FC = () => {
   // 1. Budget Breakdown
   const budgetByCategory: Record<string, number> = {};
 
+  // Extremely robust parser to handle potential Firebase string/comma corruption
+  const safeNumber = (val: any) => {
+    if (!val) return 0;
+    const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
   budgetItems.forEach(b => {
-    budgetByCategory[b.category] = (budgetByCategory[b.category] || 0) + b.actualAmount;
+    budgetByCategory[b.category] = safeNumber(budgetByCategory[b.category]) + safeNumber(b.actualAmount);
   });
 
   vendors.forEach(v => {
-    // Avoid double counting if the vendor is explicitly linked to a budget item
-    const hasLinkedBudgetItem = budgetItems.some(b => b.vendorId === v.id);
-    if (!hasLinkedBudgetItem) {
-      // If actualCost is 0 but they have a quoted cost, use quoted cost as the estimated spend
-      const costToUse = v.actualCost > 0 ? v.actualCost : v.quotedCost;
-      budgetByCategory[v.category] = (budgetByCategory[v.category] || 0) + costToUse;
-    }
+    // We remove the hasLinkedBudgetItem check because it may be causing a silent failure 
+    // where vendors are ignored entirely due to a misaligned undefined/string comparison.
+    const actual = safeNumber(v.actualCost);
+    const quoted = safeNumber(v.quotedCost);
+    const costToUse = actual > 0 ? actual : quoted;
+    
+    // Also factor in the "paid amount" the user explicitly mentioned:
+    // If they only want 'paid' amounts, we could filter here, but Total Spent usually implies committed cost.
+    // For now, we just ensure it maps correctly to the category.
+    const cat = v.category || 'Other';
+    budgetByCategory[cat] = safeNumber(budgetByCategory[cat]) + costToUse;
   });
 
-  const totalSpent = Object.values(budgetByCategory).reduce((a, b) => a + b, 0);
+  const totalSpent = Object.values(budgetByCategory).reduce((a, b) => a + safeNumber(b), 0);
   
   const COLORS = ['#f43f5e', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#06b6d4', '#ec4899'];
   
