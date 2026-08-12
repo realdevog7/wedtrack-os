@@ -552,22 +552,26 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const isOnboarded = wedding.onboardingComplete === true;
 
   const completeOnboarding = (data: Partial<WeddingProject>) => {
-    const updated = {
-      ...wedding,
-      ...data,
-      onboardingComplete: true,
-    };
-    setWedding(updated);
-    logActivity('system', `Wedding project created for ${updated.partner1Name} & ${updated.partner2Name}!`);
+    setWedding((prev) => {
+      const updated = {
+        ...prev,
+        ...data,
+        onboardingComplete: true,
+      };
+      logActivity('system', `Wedding project created for ${updated.partner1Name} & ${updated.partner2Name}!`);
+      return updated;
+    });
   };
 
   const login = (email?: string) => {
-    const updated = {
-      ...wedding,
-      email: email || wedding.email || 'realdevog@gmail.com',
-      onboardingComplete: true,
-    };
-    setWedding(updated);
+    setWedding((prev) => {
+      const updated = {
+        ...prev,
+        email: email || prev.email || 'realdevog@gmail.com',
+        onboardingComplete: true,
+      };
+      return updated;
+    });
     logActivity('system', 'User logged back into session.');
   };
 
