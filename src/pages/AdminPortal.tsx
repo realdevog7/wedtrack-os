@@ -35,7 +35,8 @@ import {
   TrashedRecord,
   generateAutoPassword,
 } from '../utils/whitelist';
-import { isFirebaseConfigured } from '../utils/firebase';
+import { isFirebaseConfigured, db } from '../utils/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 interface AdminPortalProps {
   onExit?: () => void;
@@ -53,6 +54,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
   // Workspace state
   const [records, setRecords] = useState<WhitelistRecord[]>([]);
   const [trashedRecords, setTrashedRecords] = useState<TrashedRecord[]>([]);
+  const [setupUsers, setSetupUsers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'bulk' | 'single'>('bulk');
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,6 +81,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
       setRecords(data);
       const trashed = await getTrashedEmails();
       setTrashedRecords(trashed);
+      
+      if (isFirebaseConfigured && db) {
+        try {
+          const weddingsSnap = await getDocs(collection(db, 'weddings'));
+          const setupSet = new Set<string>();
+          weddingsSnap.forEach(doc => {
+            if (doc.data().onboardingComplete === true) {
+              setupSet.add(doc.id);
+            }
+          });
+          setSetupUsers(setupSet);
+        } catch (e) {
+          console.error('Failed to load wedding statuses:', e);
+        }
+      }
     } catch (err) {
       console.error('Failed to load whitelisted emails:', err);
       showStatus('Error reading database records.', true);
@@ -553,17 +570,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
                       >
                         <Copy className="w-3.5 h-3.5 text-indigo-400" /> Copy Login
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          sessionStorage.setItem('wedtrack_admin_preview', item.email);
-                          window.location.reload();
-                        }}
-                        className="p-2 text-slate-500 hover:text-amber-400 hover:bg-amber-950/50 rounded-xl transition-all group-hover:text-amber-500 border border-transparent hover:border-amber-500/30"
-                        title="Preview Customer Dashboard (Read-Only)"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      
+                      {setupUsers.has(item.email) ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sessionStorage.setItem('wedtrack_admin_preview', item.email);
+                            window.location.reload();
+                          }}
+                          className="p-2 text-slate-500 hover:text-amber-400 hover:bg-amber-950/50 rounded-xl transition-all group-hover:text-amber-500 border border-transparent hover:border-amber-500/30"
+                          title="Preview Customer Dashboard (Read-Only)"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <div
+                          className="p-2 text-slate-700 rounded-xl cursor-not-allowed"
+                          title="User has not completed the onboarding wizard yet."
+                        >
+                          <EyeOff className="w-4 h-4 opacity-50" />
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => handleDelete(item.email)}
