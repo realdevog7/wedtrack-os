@@ -29,6 +29,7 @@ const sanitizeForFirestore = (data: any): any => {
 };
 
 export const syncWeddingToFirestore = async (wedding: WeddingProject) => {
+  if (window.__ADMIN_PREVIEW_MODE__) return;
   if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return;
   try {
     await setDoc(doc(db, 'weddings', WEDDING_DOC_ID), sanitizeForFirestore(wedding), { merge: true });
@@ -38,6 +39,7 @@ export const syncWeddingToFirestore = async (wedding: WeddingProject) => {
 };
 
 export const syncCollectionToFirestore = async (collectionName: string, items: any[]) => {
+  if (window.__ADMIN_PREVIEW_MODE__) return;
   if (!isFirebaseConfigured || !db || WEDDING_DOC_ID === 'current_wedding') return;
   try {
     await setDoc(doc(db, 'weddings', WEDDING_DOC_ID, 'collections', collectionName), { items: sanitizeForFirestore(items) }, { merge: true });

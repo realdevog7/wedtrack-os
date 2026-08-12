@@ -146,7 +146,14 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Load from Firestore on mount if configured and we have an email
   useEffect(() => {
-    if (wedding.email) {
+    if (window.__ADMIN_PREVIEW_MODE__ && window.__ADMIN_PREVIEW_EMAIL__) {
+      // Admin is impersonating a user — load their data immediately
+      checkAndLoadRemoteData(window.__ADMIN_PREVIEW_EMAIL__).then(hasData => {
+        if (!hasData) {
+          console.warn('Admin Preview: User has no cloud data or has not completed onboarding.');
+        }
+      });
+    } else if (wedding.email) {
       checkAndLoadRemoteData(wedding.email);
     }
   }, []);

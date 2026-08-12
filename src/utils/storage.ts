@@ -38,21 +38,30 @@ const KEYS = {
   DIETARY: 'wp_dietary_options',
 };
 
-function getItem<T>(key: string, defaultValue: T): T {
+declare global {
+  interface Window {
+    __ADMIN_PREVIEW_MODE__?: boolean;
+    __ADMIN_PREVIEW_EMAIL__?: string;
+  }
+}
+
+export function getItem<T>(key: string, defaultValue: T): T {
+  if (window.__ADMIN_PREVIEW_MODE__) return defaultValue;
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return defaultValue;
-    return JSON.parse(raw);
-  } catch {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading ${key} from storage:`, error);
     return defaultValue;
   }
 }
 
-function setItem<T>(key: string, value: T): void {
+export function setItem<T>(key: string, value: T): void {
+  if (window.__ADMIN_PREVIEW_MODE__) return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (err) {
-    console.error('Storage error:', err);
+  } catch (error) {
+    console.error(`Error saving ${key} to storage:`, error);
   }
 }
 

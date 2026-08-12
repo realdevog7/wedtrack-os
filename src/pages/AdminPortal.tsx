@@ -555,6 +555,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
                       </button>
                       <button
                         type="button"
+                        onClick={() => {
+                          sessionStorage.setItem('wedtrack_admin_preview', item.email);
+                          window.location.reload();
+                        }}
+                        className="p-2 text-slate-500 hover:text-amber-400 hover:bg-amber-950/50 rounded-xl transition-all group-hover:text-amber-500 border border-transparent hover:border-amber-500/30"
+                        title="Preview Customer Dashboard (Read-Only)"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDelete(item.email)}
                         className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-950/50 rounded-xl transition-all group-hover:text-slate-400"
                         title="Revoke Access"

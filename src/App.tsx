@@ -18,7 +18,7 @@ import { Onboarding, OnboardingData } from './pages/Onboarding';
 import { PublicRsvp } from './pages/PublicRsvp';
 import { getCurrencySymbol } from './utils/currency';
 import { checkEmailWhitelist } from './utils/whitelist';
-import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight, Sun, Moon } from 'lucide-react';
+import { Search, Users, Calendar, Building2, DollarSign, ArrowRight, X, LayoutDashboard, LayoutGrid, Utensils, Send, BarChart2, Folder, Settings as SettingsIcon, Sparkles, ChevronRight, Sun, Moon, Eye } from 'lucide-react';
 
 function AppContent() {
   const { isDark, setTheme } = useTheme();
@@ -230,11 +230,39 @@ function AppContent() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      </div>
+    <>
+      {/* ADMIN PREVIEW MODE OVERLAY & BANNER */}
+      {window.__ADMIN_PREVIEW_MODE__ && (
+        <div className="fixed top-0 left-0 right-0 z-[99999] pointer-events-auto">
+          {/* Top Warning Banner */}
+          <div className="bg-amber-500 text-amber-950 font-bold text-xs md:text-sm py-2.5 px-4 shadow-lg border-b border-amber-600 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+            <span className="flex items-center gap-2">
+              <Eye className="w-4 h-4 shrink-0" />
+              <span>
+                <strong>ADMIN PREVIEW MODE:</strong> Viewing dashboard as <span className="underline decoration-amber-600/50">{window.__ADMIN_PREVIEW_EMAIL__}</span>. Changes will not be saved.
+              </span>
+            </span>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('wedtrack_admin_preview');
+                window.location.hash = '#admin';
+                window.location.reload();
+              }}
+              className="bg-amber-950 hover:bg-amber-900 text-amber-400 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap shadow-sm border border-amber-800"
+            >
+              Exit Preview Mode
+            </button>
+          </div>
+          {/* This invisible div covers the whole screen below the banner and blocks ALL clicks, effectively freezing the UI while allowing mouse-wheel scroll. */}
+          <div className="fixed top-10 left-0 right-0 bottom-0 z-[99998] cursor-not-allowed" title="UI is frozen in Admin Preview Mode" />
+        </div>
+      )}
+
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -519,6 +547,7 @@ function AppContent() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
