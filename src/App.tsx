@@ -255,8 +255,6 @@ function AppContent() {
               Exit Preview Mode
             </button>
           </div>
-          {/* This invisible div covers the whole screen below the banner and blocks ALL clicks, effectively freezing the UI while allowing mouse-wheel scroll. */}
-          <div className="fixed top-10 left-0 right-0 bottom-0 z-[99998] cursor-not-allowed" title="UI is frozen in Admin Preview Mode" />
         </div>
       )}
 
@@ -268,11 +266,13 @@ function AppContent() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header
-          onOpenSearch={() => setShowSearch(true)}
-          onQuickAction={handleQuickAction}
-          onSecretAdmin={() => setActiveTab('admin')}
-        />
+        <div className={window.__ADMIN_PREVIEW_MODE__ ? 'pointer-events-none opacity-80' : ''}>
+          <Header
+            onOpenSearch={() => setShowSearch(true)}
+            onQuickAction={handleQuickAction}
+            onSecretAdmin={() => setActiveTab('admin')}
+          />
+        </div>
 
         {/* Mobile Art-Style Floating Glass Dock */}
         <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl border border-white/60 dark:border-slate-800/80 rounded-2xl shadow-2xl shadow-slate-900/10 dark:shadow-black/50 flex items-center justify-around py-2 px-1.5 transition-all duration-300">
@@ -389,7 +389,9 @@ function AppContent() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto pb-28 lg:pb-0">
-          {renderPage()}
+          <div className={window.__ADMIN_PREVIEW_MODE__ ? 'pointer-events-none' : ''}>
+            {renderPage()}
+          </div>
         </main>
       </div>
 
