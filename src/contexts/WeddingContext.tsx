@@ -137,7 +137,9 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const remoteBudget = await firestoreSync.loadCollectionFromFirestore<BudgetItem>('budget');
       if (remoteBudget) setBudgetItems(remoteBudget);
       
-      return true;
+      // CRITICAL: Only return true if the remote data has COMPLETED onboarding.
+      // This prevents new/partially-setup users from skipping onboarding.
+      return remoteWedding.onboardingComplete === true;
     }
     return false;
   };

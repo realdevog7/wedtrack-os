@@ -76,7 +76,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [whitelistError, setWhitelistError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleAuthSubmit = async (e?: React.FormEvent, forceSkipToDashboard: boolean = false) => {
+  const handleAuthSubmit = async (e?: React.FormEvent) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!data.email || !data.password) {
       setWhitelistError('Please enter both your email address and password.');
@@ -92,28 +92,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return;
       }
       setConfirmPassword(data.password);
-      const hasRemoteData = await checkAndLoadRemoteData(data.email);
-      const isProjectConfigured = Boolean(
-        wedding?.onboardingComplete ||
-        (wedding?.partner1Name && wedding?.partner1Name.trim() !== '' && wedding?.partner1Name !== 'Partner 1') ||
-        (wedding?.totalBudget && wedding?.totalBudget > 0) ||
-        hasRemoteData
-      );
-      const isSetupDone = forceSkipToDashboard || isProjectConfigured;
-      if (isSetupDone) {
+
+      // checkAndLoadRemoteData now returns true ONLY if remote data has onboardingComplete === true
+      const hasCompletedOnboarding = await checkAndLoadRemoteData(data.email);
+
+      if (hasCompletedOnboarding) {
+        // Returning user who has already completed onboarding — go straight to dashboard
         localStorage.setItem(`wedtrack_setup_done_${data.email.trim().toLowerCase()}`, 'true');
-        if (login) {
-          login(data.email);
-        } else {
-          onComplete({
-            ...data,
-            partner1Name: wedding?.partner1Name || data.partner1Name || 'Partner 1',
-            partner2Name: wedding?.partner2Name || data.partner2Name || 'Partner 2',
-            weddingDate: wedding?.weddingDate || data.weddingDate || '2027-06-18',
-            totalBudget: wedding?.totalBudget || data.totalBudget || 15000,
-          });
-        }
+        login(data.email);
       } else {
+        // Brand new user OR user who never finished onboarding — ALWAYS show onboarding wizard
         setStep(1);
       }
     } catch (err) {
@@ -341,14 +329,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         ✨ Access My Wedding Suite <ChevronRight className="w-4 h-4" />
                       </>
                     )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => handleAuthSubmit(e, true)}
-                    className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors text-[11px] font-semibold mt-1 flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    Already configured your wedding? Skip directly to Dashboard →
                   </button>
                 </form>
 
