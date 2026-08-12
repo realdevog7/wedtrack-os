@@ -6,6 +6,8 @@ import {
   Key,
   UserPlus,
   Trash2,
+  RotateCcw,
+  Archive,
   Search,
   RefreshCw,
   AlertTriangle,
@@ -26,7 +28,11 @@ import {
   addWhitelistedEmail,
   deleteWhitelistedEmail,
   bulkAddWhitelistedEmails,
+  getTrashedEmails,
+  restoreWhitelistedEmail,
+  permanentlyDeleteWhitelistedEmail,
   WhitelistRecord,
+  TrashedRecord,
   generateAutoPassword,
 } from '../utils/whitelist';
 import { isFirebaseConfigured } from '../utils/firebase';
@@ -46,9 +52,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
 
   // Workspace state
   const [records, setRecords] = useState<WhitelistRecord[]>([]);
+  const [trashedRecords, setTrashedRecords] = useState<TrashedRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'bulk' | 'single'>('bulk');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showTrash, setShowTrash] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
   // Form states (No Order ID - Email only!)
@@ -69,6 +77,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
     try {
       const data = await getWhitelistedEmails();
       setRecords(data);
+      const trashed = await getTrashedEmails();
+      setTrashedRecords(trashed);
     } catch (err) {
       console.error('Failed to load whitelisted emails:', err);
       showStatus('Error reading database records.', true);
@@ -139,14 +149,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
   };
 
   const handleDelete = async (email: string) => {
-    if (!confirm(`Are you sure you want to revoke app access for ${email}?`)) return;
+    if (!confirm(`Move ${email} to trash? You can restore them later from the Recently Deleted section.`)) return;
 
     try {
       await deleteWhitelistedEmail(email);
-      showStatus(`Revoked access for ${email}.`);
+      showStatus(`Moved ${email} to trash. You can restore them anytime! 🗑️`);
       await loadData();
     } catch (err) {
       showStatus('Failed to revoke access.', true);
+    }
+  };
+
+  const handleRestore = async (email: string) => {
+    try {
+      await restoreWhitelistedEmail(email);
+      showStatus(`✅ Successfully restored ${email} back to the active whitelist!`);
+      await loadData();
+    } catch (err) {
+      showStatus('Failed to restore email.', true);
+    }
+  };
+
+  const handlePermanentDelete = async (email: string) => {
+    if (!confirm(`⚠️ PERMANENTLY DELETE ${email}?\n\nThis will:\n• Remove them from trash\n• Wipe ALL their wedding data from the database\n\nThis action is IRREVERSIBLE!`)) return;
+
+    try {
+      await permanentlyDeleteWhitelistedEmail(email);
+      showStatus(`Permanently deleted ${email} and wiped all their data.`);
+      await loadData();
+    } catch (err) {
+      showStatus('Failed to permanently delete.', true);
     }
   };
 
@@ -543,13 +575,93 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
                   {isFirebaseConfigured ? 'Cloud Firestore Sync' : 'Local Storage (Demo Mode)'}
                 </strong>
               </span>
-              <button
-                onClick={loadData}
-                className="hover:text-white flex items-center gap-1.5 transition-colors bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-indigo-400" /> Refresh List
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowTrash(!showTrash)}
+                  className={`flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg border ${
+                    showTrash
+                      ? 'bg-amber-950/50 text-amber-400 border-amber-500/30'
+                      : 'bg-slate-900 hover:text-white border-slate-800'
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5" /> Trash{trashedRecords.length > 0 && ` (${trashedRecords.length})`}
+                </button>
+                <button
+                  onClick={loadData}
+                  className="hover:text-white flex items-center gap-1.5 transition-colors bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-indigo-400" /> Refresh List
+                </button>
+              </div>
             </div>
+
+            {/* ---- TRASH / RECENTLY DELETED SECTION ---- */}
+            {showTrash && (
+              <div className="mt-4 pt-4 border-t border-amber-500/20">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <Archive className="w-4 h-4 text-amber-400" />
+                  <h3 className="font-serif font-bold text-base text-amber-300">Recently Deleted</h3>
+                  <span className="bg-amber-500/10 text-amber-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                    {trashedRecords.length} in trash
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mb-3">
+                  These users have been soft-deleted. Their wedding data is still preserved on the server. You can <strong className="text-amber-300">Restore</strong> them to re-grant access, or <strong className="text-rose-400">Permanently Delete</strong> to wipe all their data forever.
+                </p>
+                {trashedRecords.length === 0 ? (
+                  <div className="text-center py-8 bg-slate-950/60 rounded-2xl border border-dashed border-slate-800">
+                    <Archive className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">Trash is empty. No recently deleted users.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {trashedRecords.map((item) => (
+                      <div
+                        key={item.email}
+                        className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/20 flex items-center justify-between text-xs hover:border-amber-500/40 transition-all shadow-md group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 text-amber-400 font-bold flex items-center justify-center text-sm shrink-0 border border-amber-500/30">
+                            {item.email.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-300 block text-sm line-through decoration-amber-500/50">
+                              {item.email}
+                            </span>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span className="text-[10px] text-amber-400">
+                                🗑️ Deleted: {new Date(item.trashedAt).toLocaleDateString()}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                Originally added: {new Date(item.originalCreatedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRestore(item.email)}
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-all flex items-center gap-1.5 border border-emerald-500/30 shadow-sm"
+                            title="Restore to Active Whitelist"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" /> Restore
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handlePermanentDelete(item.email)}
+                            className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-950/50 rounded-xl transition-all"
+                            title="Permanently Delete & Wipe All Data"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>

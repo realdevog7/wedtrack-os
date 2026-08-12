@@ -262,15 +262,28 @@ const addWhitelistedEmailToLocal = async (email: string, orderId: string, custom
   }
 };
 
+export interface TrashedRecord {
+  email: string;
+  orderId: string;
+  password?: string;
+  originalCreatedAt: string;
+  trashedAt: string;
+}
+
 /**
- * Remove an email from the whitelist
+ * Soft-delete: Move an email to the trash (recoverable) instead of permanent deletion.
+ * The user is removed from whitelisted_users and placed into trashed_users.
+ * Their wedding data is NOT wiped — it stays intact for restoration.
  */
 export const deleteWhitelistedEmail = async (rawEmail: string): Promise<void> => {
   const email = rawEmail.trim().toLowerCase();
   
+  // Remove from local whitelist cache
   const localData = localStorage.getItem(LOCAL_WHITELIST_KEY);
+  let originalRecord: WhitelistRecord | undefined;
   if (localData) {
     const records: WhitelistRecord[] = JSON.parse(localData);
+    originalRecord = records.find((r) => r.email === email);
     const filtered = records.filter((r) => r.email !== email);
     localStorage.setItem(LOCAL_WHITELIST_KEY, JSON.stringify(filtered));
   }
@@ -283,25 +296,115 @@ export const deleteWhitelistedEmail = async (rawEmail: string): Promise<void> =>
 
   if (isFirebaseConfigured && db) {
     try {
-      // 1. Delete from whitelist
-      await deleteDoc(doc(db, 'whitelisted_users', email));
+      // 1. Read the original record before deleting so we can preserve it in trash
+      const docRef = doc(db, 'whitelisted_users', email);
+      const docSnap = await getDoc(docRef);
+      const firestoreData = docSnap.exists() ? docSnap.data() : null;
 
-      // 2. Wipe ALL client data from weddings collection to enforce data privacy
+      // 2. Move to trashed_users collection (backup!)
+      const trashedRecord: TrashedRecord = {
+        email,
+        orderId: firestoreData?.orderId || originalRecord?.orderId || 'UNKNOWN',
+        password: firestoreData?.password || originalRecord?.password || generateAutoPassword(email),
+        originalCreatedAt: firestoreData?.createdAt || originalRecord?.createdAt || new Date().toISOString(),
+        trashedAt: new Date().toISOString(),
+      };
+      await setDoc(doc(db, 'trashed_users', email), trashedRecord);
+
+      // 3. Delete from active whitelist (but do NOT wipe wedding data yet!)
+      await deleteDoc(docRef);
+
+      console.log(`Soft-deleted ${email} → moved to trash (data preserved for restore)`);
+    } catch (err) {
+      console.error('Error soft-deleting email:', err);
+    }
+  }
+};
+
+/**
+ * Get all trashed (soft-deleted) users from Firestore
+ */
+export const getTrashedEmails = async (): Promise<TrashedRecord[]> => {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snapshot = await getDocs(collection(db, 'trashed_users'));
+    return snapshot.docs.map((d) => d.data() as TrashedRecord);
+  } catch (err) {
+    console.error('Error loading trashed emails:', err);
+    return [];
+  }
+};
+
+/**
+ * Restore a trashed user back to the active whitelist (undo accidental delete)
+ */
+export const restoreWhitelistedEmail = async (rawEmail: string): Promise<void> => {
+  const email = rawEmail.trim().toLowerCase();
+
+  if (isFirebaseConfigured && db) {
+    try {
+      // 1. Read the trashed record
+      const trashRef = doc(db, 'trashed_users', email);
+      const trashSnap = await getDoc(trashRef);
+      if (!trashSnap.exists()) {
+        console.warn(`No trashed record found for ${email}`);
+        return;
+      }
+      const trashed = trashSnap.data() as TrashedRecord;
+
+      // 2. Re-add to whitelisted_users
+      await setDoc(doc(db, 'whitelisted_users', email), {
+        email,
+        orderId: trashed.orderId,
+        createdAt: trashed.originalCreatedAt,
+        status: 'active',
+        password: trashed.password || generateAutoPassword(email),
+      });
+
+      // 3. Remove from trashed_users
+      await deleteDoc(trashRef);
+
+      // 4. Remove from local deleted list
+      const deletedList: string[] = JSON.parse(localStorage.getItem('wedtrack_deleted_emails') || '[]');
+      localStorage.setItem('wedtrack_deleted_emails', JSON.stringify(deletedList.filter((e) => e !== email)));
+
+      // 5. Re-add to local whitelist
+      await addWhitelistedEmailToLocal(email, trashed.orderId, trashed.password);
+
+      console.log(`Successfully restored ${email} from trash back to active whitelist`);
+    } catch (err) {
+      console.error('Error restoring email from trash:', err);
+    }
+  }
+};
+
+/**
+ * Permanently delete a trashed user AND wipe all their wedding data. 
+ * This is irreversible!
+ */
+export const permanentlyDeleteWhitelistedEmail = async (rawEmail: string): Promise<void> => {
+  const email = rawEmail.trim().toLowerCase();
+
+  if (isFirebaseConfigured && db) {
+    try {
+      // 1. Delete from trash
+      await deleteDoc(doc(db, 'trashed_users', email)).catch(() => {});
+
+      // 2. Wipe ALL client data from weddings collection
       const weddingDocRef = doc(db, 'weddings', email);
-      
-      // Delete subcollections (guests, tasks, vendors, budget, tables, files)
       const subcollections = ['guests', 'tasks', 'vendors', 'budget', 'tables', 'files'];
       for (const sub of subcollections) {
         const subRef = doc(db, 'weddings', email, 'collections', sub);
-        await deleteDoc(subRef).catch(() => {}); // Catch safely if doesn't exist
+        await deleteDoc(subRef).catch(() => {});
       }
-
-      // Finally delete the main wedding document
       await deleteDoc(weddingDocRef).catch(() => {});
 
-      console.log(`Successfully wiped all data for ${email}`);
+      // 3. Also ensure they're gone from whitelisted_users (just in case)
+      await deleteDoc(doc(db, 'whitelisted_users', email)).catch(() => {});
+
+      console.log(`Permanently deleted ${email} and wiped all data`);
     } catch (err) {
-      console.error('Error deleting email and wiping data from Firestore:', err);
+      console.error('Error permanently deleting email and data:', err);
     }
   }
 };
