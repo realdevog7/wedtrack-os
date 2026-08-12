@@ -572,12 +572,16 @@ export const WeddingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const logout = () => {
-    const updated = {
-      ...wedding,
-      onboardingComplete: false,
-    };
-    setWedding(updated);
-    logActivity('system', 'User logged out of the session.');
+    // 1. Disconnect Firebase sync BEFORE resetting local state so we don't wipe cloud data
+    if (isFirebaseConfigured) {
+      firestoreSync.setFirestoreEmail('');
+    }
+    
+    // 2. Clear all local storage to guarantee a fresh state for the next user
+    storage.resetAllDataToSample();
+
+    // 3. Force a clean reload so all React contexts and states are completely flushed
+    window.location.reload();
   };
 
   return (
