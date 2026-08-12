@@ -29,20 +29,22 @@ function AppContent() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRsvpPortal, setIsRsvpPortal] = useState(() => window.location.hash.startsWith('#rsvp'));
-  const [isAdminPortal, setIsAdminPortal] = useState(() =>
-    window.location.hash.startsWith('#admin') ||
-    window.location.search.includes('admin=true') ||
-    window.location.pathname.startsWith('/admin')
-  );
+  const [isAdminPortal, setIsAdminPortal] = useState(() => {
+    if (window.__ADMIN_PREVIEW_MODE__) return false;
+    return window.location.hash.startsWith('#admin') ||
+      window.location.search.includes('admin=true') ||
+      window.location.pathname.startsWith('/admin');
+  });
 
   useEffect(() => {
     const handleNavigationChange = () => {
       setIsRsvpPortal(window.location.hash.startsWith('#rsvp'));
-      setIsAdminPortal(
-        window.location.hash.startsWith('#admin') ||
-        window.location.search.includes('admin=true') ||
-        window.location.pathname.startsWith('/admin')
-      );
+      setIsAdminPortal(() => {
+        if (window.__ADMIN_PREVIEW_MODE__) return false;
+        return window.location.hash.startsWith('#admin') ||
+          window.location.search.includes('admin=true') ||
+          window.location.pathname.startsWith('/admin');
+      });
     };
     window.addEventListener('hashchange', handleNavigationChange);
     window.addEventListener('popstate', handleNavigationChange);
