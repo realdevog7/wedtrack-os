@@ -296,11 +296,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onExit }) => {
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-900 text-center relative z-10">
-            <span className="text-[11px] text-slate-500">
-              Demo Master Key: <strong className="text-pink-400 font-mono">etsy2026</strong>
-            </span>
-          </div>
+
         </div>
       </div>
     );
